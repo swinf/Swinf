@@ -1,6 +1,4 @@
 import re
-from debug import *
-
 
 
 ROUTES_SIMPLE = {}
@@ -38,7 +36,6 @@ def match_url(url, method = 'GET'):
             return (handler, match.groupdict())
     return (None, None)
 
-@deco
 def add_route(route, handler, method='GET', simple=False):
     """ Adds a new route to the route mappings.
         
@@ -63,34 +60,19 @@ def route(url, **kargs):
 
 __handlespace__ = None
 
+
 def bind_environ(handlespace):
-    """ Bind application's local environ to swinf's global environ. """
+    """ Bind application's local environ to swinf's global environ. 
+    this is the first process: 
+
+    Example:
+        __handlespace__ = {}
+        bind_environ(__handlespace__)
+    """
     global __handlespace__
     __handlespace__ = handlespace
+    print "__handlespace__: ", __handlespace__
     
-    
-
-
-def add_handler(func, __handlespace__, method="GET"):
-    """ Add handler's name to local __handlespace__
-    this will help a lot when generate routes
-    """
-    if method not in __handlespace__:
-        __handlespace__[method] = set()
-    __handlespace__[method].add(func)
-
-
-
-def handler(__handlespace__, method="GET"):
-    """ Decorator to set a method a handler
-    Example:
-        you can access handler model.func  by url: '/model/func'
-    """
-    def wrapper(func):
-        add_handler(func.__name__, __handlespace__,  method)
-        return func
-    return wrapper
-
 
 def join_handler_space(*module_paths):
     """ Given handler's module and automatically add handlers to routes
@@ -111,12 +93,47 @@ def join_handler_space(*module_paths):
         path = path.strip()
         # TODO use regrex to verify the reliability of path
         exec "import %s" % path
-        exec "handle_space = %s.__handlespace__" % path
+        #exec "handle_space = %s.__handlespace__" % path
+        global __handlespace__
         # TODO 
+        handle_space = __handlespace__
         for method in handle_space:
             for handler in handle_space[method]:
                 handler_str = "%s.%s " % (path, handler)
                 route = '/' + handler_str.replace(".", "/").strip()
                 exec "handler  = %s" % handler_str
                 add_route(route, handler, method, simple=True)
+
+def handler(method="GET"):
+    """ Decorator to set a method a handler
+
+    Example:
+
+        model.hello:
+        @handler("GET")
+        def hello():
+            return "hello world"
+
+        in view.py:
+        import model.hello
+        
+        then you can access `model.hello` handler model.func  by route: '/model/hello'
+    """
+    def wrapper(func):
+        print "in wrapper"
+        add_handler(func.__name__, method)
+        return func
+    return wrapper
+
+
+def add_handler(func, method="GET"):
+    """ Add handler's name to local __handlespace__
+    this will help a lot when generate routes
+    """
+    global __handlespace__
+
+    if method not in __handlespace__:
+        __handlespace__[method] = set()
+    __handlespace__[method].add(func)
+
 

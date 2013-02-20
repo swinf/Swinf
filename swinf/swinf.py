@@ -13,8 +13,6 @@ import Cookie
 import traceback
 
 from selector import *
-from debug import *
-
 
 
 
