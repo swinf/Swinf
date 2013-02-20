@@ -6,19 +6,18 @@ from urlparse import parse_qs
 import cgi
 import os
 import os.path
-import sys
 import mimetypes
 import threading
-import re
 import time
-import random 
 import Cookie
+import traceback
+
+from selector import *
+from debug import *
 
 
 
 
-ROUTES_SIMPLE = {}
-ROUTES_REGEXP = {}
 ERROR_HANDLER = {}
 HTTP_CODES = {
     100: 'CONTINUE',
@@ -331,61 +330,6 @@ def send_file(filename, root, guessmime = True, mimetype = 'text/plain'):
         response.header['Last-Modified'] = ts
     raise BreakSwinf(open(filename, 'r'))
 
-# Routing
-
-def compile_route(route):
-    """ Compiles a route string and returns a precompiled RegexObject.
-
-    Routes may contain some special syntax.
-    Example: '/user/:id/:action' will match '/user/5/kiss' with {'id':'5', 'action':'kiss'} """
-    route = route.strip().lstrip('$^/').rstrip('$^')
-    # Something like: '/user/:id#[0-9]#' will match
-    # '/user/5' with {id:5}
-    # trans to regrex format :r'/user/(?P<id>[0-9])'
-    route = re.sub(r':([a-zA-Z_]+)(?P<uniq>[^\w/])(?P<re>.+?)(?P=uniq)', r'(?P<\1>\g<re>)', route)
-    route = re.sub(r':([a-zA-Z_]+)', r'(?P<\1>[^/]+)', route)
-    return re.compile('^/%s$' % route)
-
-
-def match_url(url, method = 'GET'):
-    """ Returns the first matching handler and a parameter dict or (None, None)"""
-    url = '/' + url.strip().lstrip('/')
-    # Static routes first
-    route = ROUTES_SIMPLE.get(method, {}).get(url, None)
-    if route:
-        return (route, {})
-    # Then regrex routes
-    routes = ROUTES_REGEXP.get(method, [])
-    for i in xrange(len(routes)):
-        match = routes[i][0].match(url)
-        if match:
-            handler = routes[i][1]
-            # TODO swap the frequently matching route with its predecessor
-            return (handler, match.groupdict())
-    return (None, None)
-
-
-def add_route(route, handler, method='GET', simple=False):
-    """ Adds a new route to the route mappings.
-        
-        Example:
-        def hello(): return 'hello world'
-        add_route(r'/hello', hello)"""
-    method = method.strip().upper()
-    if re.match(r'^/(\w+/)*\w*$', route) or simple:
-        ROUTES_SIMPLE.setdefault(method, {})[route] = handler
-    else:
-        route = compile_route(route)
-        ROUTES_REGEXP.setdefault(method, []).append([route, handler])
-
-
-def route(url, **kargs):
-    """ Decorator for request handler. Same as add_route(url, handler)."""
-    def wrapper(handler):
-        add_route(url, handler, **kargs)
-        return handler
-    return wrapper
-
 
 def validate(**vkargs):
     """ Validates and manipulates keyword arguments by user defined callables
@@ -397,7 +341,7 @@ def validate(**vkargs):
                     abort(400, 'Missing parameter: %s' % key)
                 try:
                     kargs[key] = vkargs[key](kargs[key])
-                except ValueError, e:
+                except ValueError:
                     abort(400, 'Wrong parameter form at for: %s' % key)
             return func(**kargs)
         return decorator
@@ -405,13 +349,13 @@ def validate(**vkargs):
 
 # Error handling
 
-def set_error_handler(code, handler):
-    code = int(code)
-    ERROR_HANDLER[code] = handler
 
 def error(code=500):
     """ Decorator for error handler. Same as set_error_handler(code, handler). """
     def wrapper(handler):
+        def set_error_handler(code, handler):
+            code = int(code)
+            ERROR_HANDLER[code] = handler
         set_error_handler(code, handler)
         return handler
     return wrapper
@@ -439,8 +383,8 @@ class WSGIRefServer(ServerAdaper):
 
 
 def run(server=WSGIRefServer, host='127.0.0.1', port=8080, optimize=False, **kargs):
-    """ Runs swinf as a web server, using Python's built-in swgiref implementation by default.
-    """
+    """ Runs swinf as a web server, using Python's built-in swgiref implementation by default.  """
+
     global OPTIMIZER
     OPTIMIZER = bool(optimize)
     quiet = bool('quiet' in kargs and kargs['quiet'])
