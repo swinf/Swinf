@@ -23,6 +23,7 @@ A Bottle.py like route binding mechanism:
 Much simpler route binding mechanism:
 
 .. code-block:: python
+
     # module1.py
 
     from swinf.selector import handler, bind_eviron
@@ -51,6 +52,7 @@ Much simpler route binding mechanism:
     )
 
     run(host='localhost', port=8080)
+
 
 This will will automatically bind route `/module1/hello` to handler `module1.hello` and `/module1/world` to handler `module1.world`
 
