@@ -321,12 +321,12 @@ def send_file(filename, root, guessmime = True, mimetype = 'text/plain'):
 
     stats = os.stat(filename)
     if 'Content-Length' not in response.header:
-        response.header['Content-Length'] = stats.st_size
+        response.header['Content-Length'] = str(stats.st_size)
     if 'Last-Modified' not in response.header:
         ts = time.gmtime(stats.st_mtime)
         ts = time.strftime("%a, %d %b %Y %H:%M:%S +0000", ts)
         response.header['Last-Modified'] = ts
-    raise BreakSwinf(open(filename, 'r'))
+    raise BreakSwinf(open(filename, 'rb'))
 
 
 def validate(**vkargs):
