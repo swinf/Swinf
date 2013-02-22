@@ -85,18 +85,28 @@ class BreakSwinf(SwinfException):
         self.output = output
 
 
+
+ENVIRON = None
+
+def bind_environ(env):
+    """ Bind local project's settings to Swinf's core environment. """
+    global ENVIRON
+    ENVIRON = env
+
 # Implement WSGI 
 
 def WSGIHandler(environ, start_response):
-    """The Swinf WSGI-handler"""
+    """ The Swinf WSGI-handler """
     global request
     global response
     request.bind(environ)
     response.bind()
+
+    # Request dynamic route
     try:
         handler, args = match_url(request.path, request.method)
         if not handler:
-            raise HTTPError(404, "Not found")
+            raise HTTPError(404, r"<h1>Not found</h1>")
         output = handler(**args)
     except BreakSwinf, shard:
         output = shard.output
@@ -297,12 +307,12 @@ def redirect(url, code = 307):
     response.header['Location'] = url
     raise BreakSwinf("")
 
-def send_file(filename, root, guessmime = True, mimetype = 'text/plain'):
-    """ Aborts execution and sends a static files as response. """
+def send_file(filename, root="", guessmime = True, mimetype = 'text/plain'):
+    """ Aborts execution and sends a static files as response. 
+        if filename.startswith("/"), that means a full path """
     root = os.path.abspath(root) + '/'
     filename = os.path.normpath(filename).strip('/')
     filename = os.path.join(root, filename)
-
     if not filename.startswith(root):
         abort(401, "Access denied.")
     elif not os.path.exists(filename) or not os.path.isfile(filename):

@@ -1,6 +1,9 @@
+from swinf import core
 from swinf.selector import handler_walk
-from swinf.core import run
+import environ
 
+core.DEBUG = True
+core.bind_environ(environ.ENV)
 
 handler_walk("controller/")
-run()
+core.run()

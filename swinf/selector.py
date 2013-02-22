@@ -189,5 +189,3 @@ def add_handler(func, method="GET"):
     if method not in __handlespace__:
         __handlespace__[method] = set()
     __handlespace__[method].add(func)
-
-
