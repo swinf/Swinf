@@ -36,6 +36,7 @@ def match_url(url, method = 'GET'):
             return (handler, match.groupdict())
     return (None, None)
 
+
 def add_route(route, handler, method='GET', simple=False):
     """ Adds a new route to the route mappings.
         
@@ -71,38 +72,92 @@ def bind_environ(handlespace):
     """
     global __handlespace__
     __handlespace__ = handlespace
-    print "__handlespace__: ", __handlespace__
+
+
+def handler_walk(control_dir = "controller/", skip_prefix=True):
+    """ Tranverse the 'controller/' dir and merge handlers from each module.  
+        
+        Example:
+            
+            # control/a.py contains handler: control.a.hello
+            # control/b.py contains handler: control.b.world
+            # main.py
+            handle_walk("controller/")
+
+            # equal to mannually add following code
+
+            # join_handler_space(
+            #   "control.a",
+            #   "control.b",
+            # )
+    """
+    import os
+
+    handle_modules = []
+
+    def add_handle_modules(control_dir):
+        """ Scan modules and get module paths containing valid handlers.  """
+        objects = os.walk(control_dir)
+        # current dir
+        for obj in objects:
+            if obj[2] and "__init__.py" in obj[2]:
+                module_files = [ f[:-3] for f in obj[2] if f.endswith(".py") ]
+                module_paths = [os.path.join(control_dir, f) for f in module_files ]
+                module_strs = [f.replace('/', '.') for f in module_paths]
+                handle_modules.extend(module_strs)
+                # Nested walking 
+                if obj[1]:
+                    for dirpath in obj[1]:
+                        add_handle_modules( os.path.join(control_dir, dirpath))
+
+    add_handle_modules(control_dir)
+    join_handler_space(*handle_modules)
+    
+    prefix = "/" + control_dir
+
+    if skip_prefix:
+        print "skip prefix"
+        for method in ROUTES_SIMPLE:
+            for route in ROUTES_SIMPLE[method]:
+                print "prefix: %s, route: %s : " % (prefix, route)
+                if route.startswith(prefix):
+                    handler = ROUTES_SIMPLE[method][route]
+                    del ROUTES_SIMPLE[method][route]
+                    route = route.replace(prefix, "/")
+                    ROUTES_SIMPLE[method].setdefault(route, handler)
+
+        
     
 
 def join_handler_space(*module_paths):
     """ Given handler's module and automatically add handlers to routes
     
     Example:
-        import package1.module1
-        import package2.module2
 
-        join_handler_space(
+        join_handler_space( 
             "package1.module1",
             "package2.module2",
         )
 
-    and it will add all handlers of package1.module1
+    and it will add all handlers of package1.module1 and package2.module2
     to routes
     """
     for path in module_paths:
         path = path.strip()
         # TODO use regrex to verify the reliability of path
         exec "import %s" % path
-        #exec "handle_space = %s.__handlespace__" % path
-        global __handlespace__
-        # TODO 
-        handle_space = __handlespace__
+        try:
+            exec "handle_space = %s.__handlespace__" % path
+        except:
+            print ".. tranverse controller >> skip module: %s" % path
+            continue
         for method in handle_space:
             for handler in handle_space[method]:
                 handler_str = "%s.%s " % (path, handler)
                 route = '/' + handler_str.replace(".", "/").strip()
                 exec "handler  = %s" % handler_str
                 add_route(route, handler, method, simple=True)
+
 
 def handler(method="GET"):
     """ Decorator to set a method a handler
@@ -120,7 +175,6 @@ def handler(method="GET"):
         then you can access `model.hello` handler model.func  by route: '/model/hello'
     """
     def wrapper(func):
-        print "in wrapper"
         add_handler(func.__name__, method)
         return func
     return wrapper
