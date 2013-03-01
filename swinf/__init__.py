@@ -97,7 +97,21 @@ class lazy_attribute(object):
         value = self.getter(cls)
         setattr(cls, self.__name__, value)
         return value
-        
+
+class cached_property(object):
+    """
+    A property that is only computed once per instance and then replaces itself with an ordinary attribute.
+    """
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, obj, cls):
+        # TODO why need cls?
+        if obj is None: return self
+        # replace itself with an ordinary attribute
+        value = obj.__dict__[self.func.__name__] = self.func(obj)
+        return value
+
 
 ENVIRON = None
 
