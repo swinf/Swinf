@@ -2,17 +2,17 @@ __author__ = 'superjom'
 __version__ = ('0', '0', '1')
 __license__ = 'MIT'
 
-from urlparse import parse_qs
 import cgi
+import Cookie
+import functools
 import os
 import os.path
 import mimetypes
 import threading
 import time
-import Cookie
 import traceback
-
-from selector import *
+from urlparse import parse_qs
+from swinf.selector import *
 
 
 ERROR_HANDLER = {}
@@ -61,7 +61,7 @@ HTTP_CODES = {
 }
 
 
-# Exceptions and Events
+# Exceptions and Events ------------------------------------------------
 
 class SwinfException(Exception):
     """ Base Exception"""
@@ -84,6 +84,20 @@ class BreakSwinf(SwinfException):
         self.output = output
 
 
+# Tools -----------------------------------------------------------------
+class lazy_attribute(object):
+    """
+    A property that caches itself to the class object.
+    """
+    def __init__(self, func):
+        functools.update_wrapper(self, func, updated=[])
+        self.getter = func
+
+    def __get__(self, obj, cls):
+        value = self.getter(cls)
+        setattr(cls, self.__name__, value)
+        return value
+        
 
 ENVIRON = None
 
