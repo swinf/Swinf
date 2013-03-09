@@ -40,7 +40,6 @@ class BaseCommand(object):
             self.execute(*args, **options.__dict__)
         except Exception, e:
             parser.print_usage()
-        sys.stdout.write(self.handle(*args))
 
     def execute(self, *args, **options):
         raise NotImplementedError()
@@ -50,7 +49,7 @@ class LabelCommand(BaseCommand):
     args = '<label label ...>'
     label = 'label'
 
-    def handle(self, *labels, **options):
+    def execute(self, *labels, **options):
         if not labels:
             raise CommandError('Enter at least one %s.' % self.label)
 
@@ -61,11 +60,15 @@ class LabelCommand(BaseCommand):
                 output.append(label_output)
         return '\n'.join(output)
 
-    def handle_label(self, label, **options):
+    def handle_label(self, label, *args, **options):
         raise NotImplementedError()
 
+# ------------------ copy files --------------------------
 
-class CopyFrame:
+class CopyFrame(object):
+    """
+    copy files from swinf to user's project path
+    """
     def __call__(self, project_name, directory, other_name=''):
         self.run(project_name, directory, other_name)
 
@@ -117,5 +120,39 @@ class CopyFrame:
             st = os.stat(filename)
             new_permissions = stat.S_IMODE(st.st_mode) | stat.S_IWUSR
             os.chmod(filename, new_permissions)
+
+# TODO complete template
+#from swinf.template import template
+class CopyTemplate(object):
+    """
+    copy a single code template from swinf to user's path
+    """
+    def __call__(self, frompath, topath, **kwargs):
+        """
+        args:
+            frompath: path of code template
+            topath: path of target module 
+            kwargs: to render template 
+        """
+        self.run(frompath, topath, **kwargs)
+    
+    def run(self, frompath, topath, **kwargs):
+        """
+        copy and render template
+        """
+        # write mode: 'w': write, 'a', append
+        mode = kwargs.pop('mode', 'write')
+        mode_dic = {'write':'w', 'append':'a'}
+        t = template(frompath, **kwargs)
+        try:
+            with open(topath, mode_dic[mode]) as f:
+                f.write(t)
+        except KeyError:
+            raise CommandError("write mode %s is wrong, should be %s" % (mode, repr(mode_dic.keys())))
+        except IOError:
+            raise CommandError("target path: %s is invalid" % topath)
+
+
 # make class executable
 copy_frame = CopyFrame()
+copy_template = CopyTemplate()

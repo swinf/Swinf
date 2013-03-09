@@ -20,8 +20,9 @@ def call_command(name, *args, **options):
 
 class ManagementUtility(object):
     def __init__(self):
-        self.commands = self.default_commands()
+        self.commands = self.default_commands
 
+    @property
     def default_commands(self):
         command_dir = os.path.join(__path__[0], 'commands')
         # skip __init__.py
@@ -35,7 +36,7 @@ class ManagementUtility(object):
         usage = ['%s <subcommand> [options] [args]' % prog_name]
         usage.append('Swinf command line tool, version %s.%s.%s' % swinf.__version__)
         usage.append("Type '%s help <subcommand>' for help on a specific subcommand''" % prog_name)
-        usage.append('Avaiable subcommand:')
+        usage.append('Avaiable subcommands:')
         commands = self.commands.keys()
         commands.sort()
         for cmd in commands:
@@ -76,7 +77,6 @@ class ManagementUtility(object):
         elif argv[1:] == ['--help']:
             self.print_help(argv)
         else:
-            print 'go into fetch_command'
             self.fetch_command(command_name, argv[0]).run(argv[1:])
                 
 
