@@ -100,9 +100,10 @@ def handler_walk(control_dir = "controller/", skip_prefix=True):
         objects = os.walk(control_dir)
         # current dir
         for obj in objects:
+            # TODO inter add abs path
             if obj[2] and "__init__.py" in obj[2]:
                 module_files = [ f[:-3] for f in obj[2] if f.endswith(".py") ]
-                module_paths = [os.path.join(control_dir, f) for f in module_files ]
+                module_paths = [os.path.join(obj[0], f) for f in module_files ]
                 module_strs = [f.replace('/', '.') for f in module_paths]
                 handle_modules.extend(module_strs)
                 # Nested walking 
