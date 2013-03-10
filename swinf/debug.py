@@ -1,6 +1,6 @@
 def deco(func):
     def wrapper(*args, **kargs):
-        print "<=", args, "=>",
-        print "<<< ", func.__name__, " >>>"
+        #print "<=", args, "=>",
+        #print "<<< ", func.__name__, " >>>"
         return func(*args, **kargs)
     return wrapper

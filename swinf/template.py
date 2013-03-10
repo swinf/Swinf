@@ -24,20 +24,23 @@ class BaseTemplate:
         """
         args:
             source:     File or template source
-            name:       
+            name:       name of template file
         """
-        self.filename = name
         self.source = source.read() if hasattr(source, 'read') else source
         self.encoding = encoding
         self.settings = self.settings.copy()
         self.settings.update(settings)
         # search template file 
-        if not self.source and self.filename:
-            self.filename = self.sarch(self.name, self.lookup)
+        if not self.source:
+            if not name: raise TemplateError("No template specified.")
+            self.filename = self.search(name, self.lookup)
             if not self.filename:
-                raise TemplateError("Template %s not found") % repr(self.name)
-            if not self.source and self.filename:
-                raise TemplateError("No template specified.")
+                raise TemplateError("Template %s not found") % repr(name)
+            try:
+                with open(self.filename, 'r') as f:
+                    self.source = f.read()
+            except IOError:
+                raise TemplateError("Template load IO Error")
         self.prepare(settings)
 
     @classmethod
@@ -55,11 +58,139 @@ class BaseTemplate:
         raise NotImplementedError
 
 
-class SimpleTemplate(BaseTemplate):
+class Codit(object):
+    """
+    Parse a template to code
+    and compile it
+    the compiled code object can be easily cached
+    """
+    indent_space = '    '
     blocks = ('if', 'elif', 'else', 'try', 'except', 'finally', \
               'for', 'while', 'with', 'def', 'class')
     dedent_blocks = ('elif', 'else', 'except', 'finally')
+    # TODO add settings option
+    single_line_code = '%%'
+    multi_code_begin = '{%'
+    multi_code_end = '%}'
+
+
+    def __init__(self, template, encoding='utf8'):
+        self.template = template
+        self.encoding = encoding
+        self.stack = []
+        self.ptrbuffer = []
+        self.codebuffer = []
+        self.multiline = self.dedent = self.oneline = False
+
+    def __call__(self, tempalte):
+        """
+        return:
+            co  : compiled code
+        """
+        return self.run(template)
+
+    def yield_tokens(self, line):
+        for i, part in enumerate(re.split(r'\{\{(.*?)\}\}', line)):
+            if i % 2:
+                if part.startswith('!'): yield 'RAW', part[1:]
+                else: yield 'CMD', part
+            else: yield 'TXT', part
+
+    def code(self, stmt):
+        for line in stmt.splitlines():
+            self.codebuffer.append(self.indent_space * len(self.stack) + line.strip())
+
+
+    def flush(self):
+        if not self.ptrbuffer: return
+        cline = ''
+        for line in self.ptrbuffer:
+            for token, value in line:
+                if not value: continue
+                if token == 'TXT': cline += repr(value) # add '
+                elif token == 'RAW': cline += '_str(%s)' % value
+                elif token == 'CMD': cline += '_escape(%s)' % value
+                cline += ', '
+            cline = cline[:-2] + '\\\n'
+        cline = cline[:-2]
+        if cline[:-1].endswith('\\\\\\\\\\n'):
+            cline = cline[:-7] + cline[-1] # 'nobr\\\\\n' --> 'nobr'
+        cline = '_printlist([' + cline + '])'
+        del self.ptrbuffer[:]
+        self.code(cline)
+
+    # TODO add an option to clean empty string line 
+    def codit(self):
+        """
+        Parse tempalte to python code buffer
+        """
+        multi_code = False
+        for lineno, line in enumerate(self.template.splitlines(True)):
+            line = touni(line, self.encoding)
+            sline = line.strip()
+            # begin with {%
+            if sline.startswith(self.multi_code_begin):
+                multi_code = True
+                sline = sline[2:].strip()
+
+            if multi_code or \
+                    (sline and sline.startswith(self.single_line_code)):
+                # end with %}
+                if sline.endswith(self.multi_code_end):
+                    multi_code = False
+                    line = sline[:-2]
+                # begin with %%
+                elif sline.startswith(self.single_line_code):
+                    line = sline[2:].strip() # line following the %%
+                # with {% ... %}
+                else:
+                    line = sline
+                #if not line: continue
+                cmd = re.split(r'[^a-zA-Z0-9_]', line)[0]
+                self.flush()
+
+                if cmd in self.blocks or self.multiline:
+                    cmd = self.multiline or cmd
+                    dedent = cmd in self.dedent_blocks
+                    if dedent and not self.oneline and not self.multiline:
+                        cmd = self.stack.pop()
+                    self.code(line)
+                    # a single line
+                    oneline = not line.endswith(':')
+                    multiline = cmd if line.endswith('\\') else False
+                    if not oneline and not multiline:
+                        self.stack.append(cmd)
+                elif cmd.startswith('end') and self.stack:
+                    self.code('#end(%s) %s' % (self.stack.pop(), line.strip()[3:]))
+                else:
+                    self.code(line)
+            else:
+                self.ptrbuffer.append(self.yield_tokens(sline))
+        self.flush()
+        return '\n' .join(self.codebuffer) + '\n' 
     
+    @cached_property
+    def compile(self):
+        code = self.codit()
+        self.__clean()
+        return compile(code, '<string>', 'exec')
+
+    def __clean(self):
+        """
+        Clean env
+        
+        the instance may be cached
+        """
+        for m in (self.stack, self.ptrbuffer, \
+                self.codebuffer, self.template):
+            del m
+
+
+class SimpleTemplate(BaseTemplate, Codit):
+    def __init__(self, source=None, name=None, lookup=[], encoding='utf8', **settings):
+        BaseTemplate.__init__(self, source, name, lookup, encoding, **settings)
+        Codit.__init__(self, self.source, encoding)
+
     @lazy_attribute
     def re_pytokens(cls):
         return re.compile(r"""
@@ -76,73 +207,13 @@ class SimpleTemplate(BaseTemplate):
         if noescape:
             self._str, self._escape = self._escape, self._str
 
-    @cached_property
-    def co(self):
-        return compile(self.code, self.filename or '<string>', 'exec')
+    @deco
+    def render(self, *args, **kwargs):
+        for dictarg in args: kwargs.update(dictarg)
+        stdout = []
+        self.execute(stdout, kwargs)
+        return ''.join(stdout)
     
-    @cached_property
-    def code(self):
-        stack = []
-        ptrbuffer = []
-        codebuffer = []
-        multiline = dedent = oneline = False
-        template = self.source or open(self.filename, 'rb').read()
-        indent_space = ' ' * 4
-
-        def yield_tokens(line):
-            for i, part in enumerate(re.split(r'\{\{(.*?)\}\}', line)):
-                if i % 2:
-                    if part.startswith('!'): yield 'RAW', part[1:]
-                    else: yield 'CMD', part
-                else: yield 'TXT', part
-
-        def flush():
-            if not ptrbuffer: return
-            cline = []
-            for line in ptrbuffer:
-                for token, value in line:
-                    if token == 'TXT': cline.append(repr(value)) # add '
-                    elif token == 'RAW': cline.append('_str(%s)' % value)
-                    elif token == 'CMD': cline.append('_escape(%s)' % value)
-                    cline.append(', ')
-                cline[-1] = cline[-1][:-2] + r'\n'
-            cline = ''.join(cline)[:-2]
-            cline = '_printlist([' + cline + '])'
-            del ptrbuffer[:]
-            code(cline)
-
-        def code(stmt):
-            for line in stmt.splitlines():
-                codebuffer.append(indent_space * len(stack) + line.strip())
-
-        # run
-        for lineno, line in enumerate(template.splitlines(True)):
-            line = touni(line, self.encoding)
-            sline = line.lstrip()
-            print 'sline: ', sline
-            if sline and sline.startswith('%%'):
-                line = sline[2:].lstrip() # line following the %%
-                cmd = re.split(r'[^a-zA-Z0-9_]', line)[0]
-                flush()
-
-                if cmd in self.blocks or multiline:
-                    cmd = multiline or cmd
-                    dedent = cmd in self.dedent_blocks
-                    # a single line
-                    if dedent and not oneline and not multiline:
-                        cmd = stack.pop()
-                    code(line)
-                    oneline = not line.endswith(':')
-                    multiline = cmd if line.endswith('\\') else False
-                    if not oneline and not multiline:
-                        stack.append(cmd)
-                elif cmd == 'end' and stack:
-                    code('#end(%s) %s' % (stack.pop(), line.strip()[3:]))
-                else:
-                    code(line)
-        flush()
-        return '\n' .join(codebuffer) + '\n' 
-
     @deco
     def execute(self, _stdout, *args, **kwargs):
         for dictarg in args: kwargs.update(dictarg)
@@ -156,17 +227,18 @@ class SimpleTemplate(BaseTemplate):
             'defined': env.__contains__
         })
         env.update(kwargs)
-        print 'env', env
-        eval(self.co, env)
+        eval(self.compile, env)
+        self.__clean()
         return env
 
-    @deco
-    def render(self, *args, **kwargs):
-        for dictarg in args: kwargs.update(dictarg)
-        stdout = []
-        self.execute(stdout, kwargs)
-        print 'stdout: ', stdout
-        return ''.join(stdout)
+    def __clean(self):
+        """
+        Clean env
+
+        the template instance will be cached
+        """
+        for m in (self.source):
+            del m
 
 
 TEMPLATE_PATH = ['./views']
@@ -181,18 +253,13 @@ def template(*args, **kwargs):
     source      : template source
     '''
     source = args[0] if args else None
-    name = kwargs.pop('name', None)
-    print '.. source:', source
-    print '.. name:', name
+    name = kwargs.pop('tplpath', None)
     if not source and name:
         abort("No Template Specified")
     adapter = kwargs.pop('adapter', SimpleTemplate)
     lookup = kwargs.pop('lookup', TEMPLATE_PATH)
     # TODO tplid can be abs path or source
     tplid = (id(lookup), name or source)
-    print "adapter:", adapter
-    print "lookup", lookup
-    print "tplid:", tplid
     # refresh template if DEBUG and load changes every time
     if tplid not in TEMPLATES or DEBUG:
         settings = kwargs.pop('settings', {})
