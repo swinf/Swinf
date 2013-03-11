@@ -5,22 +5,78 @@ Swinf is a simple micro-framework for small web application and has no dependenc
 
 It offers a built-in HTTP Server, and a simple route binding mechanism.
 
+
+Commands
+---------
+run command : **swinf-admin.py startproject newproject** and swinf will create a project directory.
+
+Inside current project directory, there are a `main.py` and three subdirectorys:
+
+.. controller::
+
+    containing controllers.
+
+.. view::
+    
+    containing view template files.
+
+.. model::
+    
+    you can put your database controlling code here.
+
+You can add some controllers in `controller` directory and run `main.py`, and it will work.
+
+Template
+---------
+Currently, swinf have a simple template engine called `SimpleTemplate`.
+
+the tpl syntax follows below
+
+.. code-block:: html
+
+    <!-- in a tpl file -->
+
+    {%
+    # multiline code
+
+    def bold_wrapper(txt):
+        return "<b>" + txt + "</b>"
+    endef
+    %}
+
+    %% # sigleline code
+    %% if name:
+    <h1> hello {{name}}!</h1>
+    %% else:
+    <h1> Hello World!</h1>
+    %% endif
+
+    <ul>
+    %% for i in range(100):
+        <li>no: {{i}}</li>
+    %% endfor
+    </ul>
+
+
 Example
 --------
-A Bottle.py like route binding mechanism:
+In swinf, there is no `urls.py`-like config file, instead, there are two simple route-config ways:
+
+* A Bottle.py like route binding mechanism
 
 .. code-block:: python
     
     from swinf.swinf import run
     from swinf.selector import route
-
+    
+    # a simple controller 
     @route('/hello/:name')
     def hello(name):
         return '<h1>Hello %s!</h1>' % name.title()
 
     run(host='localhost', port=8080)
 
-Much simpler route binding mechanism:
+* Much simpler route binding mechanism
 
 .. code-block:: python
 
@@ -31,6 +87,8 @@ Much simpler route binding mechanism:
     __handlespace__ = {}
     bind_eviron(__handlespace__)
 
+    # --------- your code here -----------
+
     @handler("GET")
     def hello():
         return '<h1>Hello</h1>' 
@@ -40,21 +98,6 @@ Much simpler route binding mechanism:
         return '<h1>World</h1>' 
 
 
-    # view.py
-    from swinf.swinf import run
-    from swinf.selector import handler, bind_eviron
-    from swinf.selector import join_handler_space
+This will will automatically bind route `/module1/hello` to handler `controller.module1.hello` and `/module1/world` to handler `controller.module1.world`. 
 
-    import module1
-
-    join_handler_space(
-        "module1",
-    )
-
-    run(host='localhost', port=8080)
-
-
-This will will automatically bind route `/module1/hello` to handler `module1.hello` and `/module1/world` to handler `module1.world`
-
-
-You don't have to edit routes manully.
+You don't have to add routes manully.
