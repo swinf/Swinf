@@ -10,7 +10,7 @@ Commands
 ---------
 run command : **swinf-admin.py startproject newproject** and swinf will create a project directory.
 
-Inside current project directory, there are a `main.py` and three subdirectorys:
+Inside current project directory, there are a **main.py** and three subdirectories:
 
 .. controller::
 
@@ -57,6 +57,17 @@ the tpl syntax follows below
     %% endfor
     </ul>
 
+To use the **template**, you can use code like below:
+
+.. code-block:: python
+    
+    from swinf.template import template
+    # pass tpl source
+    html = template("<h1>hello {{name}}", name='world')
+
+    # pass a tpl file
+    html = template(path='index.tpl', name='world')
+
 
 Example
 --------
@@ -98,6 +109,6 @@ In swinf, there is no `urls.py`-like config file, instead, there are two simple 
         return '<h1>World</h1>' 
 
 
-This will will automatically bind route `/module1/hello` to handler `controller.module1.hello` and `/module1/world` to handler `controller.module1.world`. 
+This will will automatically bind route **/module1/hello** to handler **controller.module1.hello** and **/module1/world** to handler **controller.module1.world**. 
 
 You don't have to add routes manully.
