@@ -142,7 +142,7 @@ class Codit(object):
                 # begin with %%
                 elif sline.startswith(self.single_line_code):
                     line = sline[2:].strip() # line following the %%
-                # with {% ... %}
+                # within {% ... %}
                 else:
                     line = sline
                 #if not line: continue
@@ -165,7 +165,7 @@ class Codit(object):
                 else:
                     self.code(line)
             else:
-                self.ptrbuffer.append(self.yield_tokens(sline))
+                self.ptrbuffer.append(self.yield_tokens(line))
         self.flush()
         return '\n' .join(self.codebuffer) + '\n' 
     
@@ -222,6 +222,7 @@ class SimpleTemplate(BaseTemplate, Codit):
         env.update({'_stdout': _stdout,
             '_printlist': _stdout.extend,
             '_escape': self._escape,
+            '_str': self._str,
             'get': env.get,
             'setdefault': env.setdefault,
             'defined': env.__contains__
@@ -268,6 +269,7 @@ def template(*args, **kwargs):
             if settings: TEMPLATES[tplid].prepare(**settings)
         else:
             TEMPLATES[tplid] = adapter(source=source, name=name, lookup=lookup, **settings)
+    # TODO if not same settings , maybe different cache
     if not TEMPLATES[tplid]:
         abort(500, 'Template (%s) not found' % name)
     for dictarg in args[1:]: kwargs.update(dictarg)
