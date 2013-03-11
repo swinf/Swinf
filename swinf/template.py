@@ -1,13 +1,14 @@
 import re
 import os
-from swinf import HTTPError, lazy_attribute
+from swinf import HTTPError
 from swinf.utils.html import html_escape
 from swinf.utils.text import touni
 from swinf.utils.functional import cached_property
 from swinf.debug import deco
 
 class TemplateError(HTTPError):
-    pass
+    def __init__(self, message):
+        HTTPError.__init__(self, 500, message)
 
 # cache compiled templates
 TEMPLATES = {}
@@ -19,8 +20,10 @@ class BaseTemplate:
     extensions = ['', 'tpl', 'shtml']
     settings = {}
     defaults = {}   #used in render
+    lookup=['./views/']
 
-    def __init__(self, source=None, name=None, lookup=[], encoding='utf8', **settings):
+    @deco
+    def __init__(self, source=None, path=None, lookup=[], encoding='utf8', **settings):
         """
         args:
             source:     File or template source
@@ -30,12 +33,13 @@ class BaseTemplate:
         self.encoding = encoding
         self.settings = self.settings.copy()
         self.settings.update(settings)
+        if lookup: self.lookup = lookup
         # search template file 
         if not self.source:
-            if not name: raise TemplateError("No template specified.")
-            self.filename = self.search(name, self.lookup)
+            if not path: raise TemplateError("No template specified.")
+            self.filename = self.search(path, self.lookup)
             if not self.filename:
-                raise TemplateError("Template %s not found") % repr(name)
+                raise TemplateError("Template %s not found" % repr(path))
             try:
                 with open(self.filename, 'r') as f:
                     self.source = f.read()
@@ -47,6 +51,7 @@ class BaseTemplate:
     def search(cls, name, lookup=[]):
         for _dir in lookup:
             filename = os.path.join(_dir, name)
+            print 'search template in ', filename
             for extension in cls.extensions:
                 if os.path.isfile(filename + extension):
                     return filename + extension
@@ -187,19 +192,10 @@ class Codit(object):
 
 
 class SimpleTemplate(BaseTemplate, Codit):
-    def __init__(self, source=None, name=None, lookup=[], encoding='utf8', **settings):
-        BaseTemplate.__init__(self, source, name, lookup, encoding, **settings)
+    @deco
+    def __init__(self, source=None, path=None, lookup=[], encoding='utf8', **settings):
+        BaseTemplate.__init__(self, source, path, lookup, encoding, **settings)
         Codit.__init__(self, self.source, encoding)
-
-    @lazy_attribute
-    def re_pytokens(cls):
-        return re.compile(r"""
-            (''(?!')|""(?!")|'{6}|"{6}      # Empty strings    
-            |'(?:[^\\']|\\.)+?'             #   '
-            |"(?:[^\\"]|\\.)+?"             #   "
-            |'{3}(?:[^\\]|\\.|\n)+?{3}'     #   '
-            |"{3}(?:[^\\]|\\.|\n)+?{3}"     #   "
-            |\#.*)""", re.VERBOSE)
 
     def prepare(self, noescape=False, escape_func=html_escape):
         self._str = lambda x: touni(x, self.encoding)
@@ -223,9 +219,6 @@ class SimpleTemplate(BaseTemplate, Codit):
             '_printlist': _stdout.extend,
             '_escape': self._escape,
             '_str': self._str,
-            'get': env.get,
-            'setdefault': env.setdefault,
-            'defined': env.__contains__
         })
         env.update(kwargs)
         eval(self.compile, env)
@@ -242,7 +235,7 @@ class SimpleTemplate(BaseTemplate, Codit):
             del m
 
 
-TEMPLATE_PATH = ['./views']
+TEMPLATE_PATH = ['./view']
 from swinf import DEBUG, abort
 
 @deco
@@ -254,13 +247,13 @@ def template(*args, **kwargs):
     source      : template source
     '''
     source = args[0] if args else None
-    name = kwargs.pop('tplpath', None)
-    if not source and name:
+    path = kwargs.pop('path', None)
+    if not (source or path):
         abort("No Template Specified")
     adapter = kwargs.pop('adapter', SimpleTemplate)
     lookup = kwargs.pop('lookup', TEMPLATE_PATH)
     # TODO tplid can be abs path or source
-    tplid = (id(lookup), name or source)
+    tplid = (id(lookup), path or source)
     # refresh template if DEBUG and load changes every time
     if tplid not in TEMPLATES or DEBUG:
         settings = kwargs.pop('settings', {})
@@ -268,9 +261,9 @@ def template(*args, **kwargs):
             TEMPLATES[tplid] = source
             if settings: TEMPLATES[tplid].prepare(**settings)
         else:
-            TEMPLATES[tplid] = adapter(source=source, name=name, lookup=lookup, **settings)
+            TEMPLATES[tplid] = adapter(source=source, path=path, lookup=lookup, **settings)
     # TODO if not same settings , maybe different cache
     if not TEMPLATES[tplid]:
-        abort(500, 'Template (%s) not found' % name)
+        abort(500, 'Template (%s) not found' % repr(path))
     for dictarg in args[1:]: kwargs.update(dictarg)
     return TEMPLATES[tplid].render(kwargs)
