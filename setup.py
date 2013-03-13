@@ -52,6 +52,6 @@ setup(name='swinf',
     url='http://github.com/superjom/swinf',
     packages = packages,    
     data_files = data_files,
-    scripts = ['swinf/swinf-admin.py'],
+    scripts = ['swinf/conf/swinf-admin.py'],
     license='MIT',
 )
