@@ -303,9 +303,9 @@ class HeaderDict(dict):
     def items(self):
         """ Returns a list of (key, value) tuples.
         list will be transformed to list [(samekey, value)...]"""
-        for key, value in dict.items(self):
-            if not isinstance(value, list):
-                values = [value]
+        for key, values in dict.items(self):
+            if not isinstance(values, list):
+                values = [values]
             for value in values:
                 yield (key, str(value))
 
