@@ -12,17 +12,30 @@ run command : **swinf-admin.py startproject newproject** and swinf will create a
 
 Inside current project directory, there are a **main.py** and three subdirectories:
 
-.. controller::
+controller::
 
     containing controllers.
 
-.. view::
+view::
     
     containing view template files.
 
-.. model::
+    subdirecties:
+        
+        static/: contains static files
+        
+        static/images: images here
+        
+        static/style: css files here
+
+        static/script: js files here
+
+        static/files: other static files here
+
+model::
     
     you can put your database controlling code here.
+
 
 You can add some controllers in `controller` directory and run `main.py`, and it will work.
 
