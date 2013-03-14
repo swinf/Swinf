@@ -4,7 +4,6 @@ __license__ = 'MIT'
 
 import cgi
 import Cookie
-import functools
 import os
 import os.path
 import mimetypes
@@ -82,35 +81,6 @@ class BreakSwinf(SwinfException):
     """ Just a way to break current execution and instantly jump to call start_response() and return the content of output"""
     def __init__(self, output):
         self.output = output
-
-
-# Tools -----------------------------------------------------------------
-class lazy_attribute(object):
-    """
-    A property that caches itself to the class object.
-    """
-    def __init__(self, func):
-        functools.update_wrapper(self, func, updated=[])
-        self.getter = func
-
-    def __get__(self, obj, cls):
-        value = self.getter(cls)
-        setattr(cls, self.__name__, value)
-        return value
-
-class cached_property(object):
-    """
-    A property that is only computed once per instance and then replaces itself with an ordinary attribute.
-    """
-    def __init__(self, func):
-        self.func = func
-
-    def __get__(self, obj, cls):
-        # TODO why need cls?
-        if obj is None: return self
-        # replace itself with an ordinary attribute
-        value = obj.__dict__[self.func.__name__] = self.func(obj)
-        return value
 
 
 ENVIRON = None
