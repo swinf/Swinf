@@ -1,5 +1,5 @@
-__author__ = 'superjom'
-__version__ = ('0', '0', '1')
+__author__ = 'Chunwei Yan <superjom@gmail.com>'
+__version__ = ('0', '0', '3')
 __license__ = 'MIT'
 
 import cgi
