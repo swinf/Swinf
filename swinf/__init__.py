@@ -185,17 +185,17 @@ class Request(threading.local):
         if not self.path.startswith('/'):
             self.path = '/' + self.path
 
-    @property
+    @DictProperty('environ', 'swinf.method', read_only=True)
     def method(self):
         """ Returns the request method (GET, POST, PUT, DELETE, ...) """
         return self._environ.get('REQUEST_METHOD', 'GET').upper()
     
-    @property
+    @DictProperty('environ', 'swinf.query_string', read_only=True)
     def query_string(self):
         """ Content of QUERY_STRING. """
         return self._environ.get('QUERY_STRING', '')
 
-    @property
+    @DictProperty('environ', 'swinf.input_length', read_only=True)
     def input_length(self):
         """ Content of CONTENT_LENGTH. """
         try:
@@ -203,7 +203,7 @@ class Request(threading.local):
         except ValueError:
             return 0
 
-    @property
+    @DictProperty('environ', 'swinf.GET', read_only=True)
     def GET(self):
         """ Returns a dict with GET parameters."""
         if self._GET is None:
@@ -216,7 +216,7 @@ class Request(threading.local):
                     self._GET[key] = value
         return self._GET
     
-    @property
+    @DictProperty('environ', 'swinf.POST', read_only=True)
     def POST(self):
         """ Returns a dict with POST parameters."""
         if self._POST is None:
@@ -230,15 +230,23 @@ class Request(threading.local):
                 else:
                     self._POST[key] = raw_data[key].value
         return self._POST
+
+    @DictProperty('environ', 'swinf.path_info', read_only=True)
+    def path_info(self):
+        return self._environ.get('PATH_INFO', '')
+
+    @DictProperty('environ', 'swinf.remote_addr', read_only=True)
+    def remote_addr(self):
+        return cgi.escape(self._environ.get('REMOTE_ADDR'))
     
-    @property
+    @DictProperty('environ', 'swinf.params', read_only=True)
     def params(self):
         """ Returns a mix of GET and POST data. POST overwrites GET. """
         if self._GETPOST is None:
             self._GETPOST = dict(self.GET)
             self._GETPOST.update(self.POST)
 
-    @property
+    @DictProperty('environ', 'swinf.cookies', read_only=True)
     def COOKIES(self):
         """ Returns a dict with COOKIES. """
         if self._COOKIES is None:
@@ -247,6 +255,7 @@ class Request(threading.local):
             for cookie in raw_dict.values():
                 self._COOKIES[cookie.key] = cookie.value
         return self._COOKIES
+
 
 
 class Response(threading.local):
