@@ -1,3 +1,6 @@
+# Session module.
+# Borrowed from web.py project (http://webpy.org/)
+
 import re
 import os, time, datetime, random, base64
 from copy import deepcopy
@@ -28,8 +31,8 @@ class SessionExpired(HTTPError):
 # not work
 session_config = Storage({
     'cookie_name': 'session_id',
-    'cookie_domain': 'localhost',
-    'cookie_path' : '/',
+    'cookie_domain': None,
+    'cookie_path' : None,
     'timeout': 60, #24 * 60 * 60, # 24 hours in seconds
     'ignore_expiry': True,
     'ignore_change_ip': True,
