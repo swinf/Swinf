@@ -121,8 +121,9 @@ class CopyFrame(object):
             new_permissions = stat.S_IMODE(st.st_mode) | stat.S_IWUSR
             os.chmod(filename, new_permissions)
 
-# TODO complete template
-#from swinf.template import template
+
+
+from swinf.template import template
 class CopyTemplate(object):
     """
     copy a single code template from swinf to user's path

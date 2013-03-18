@@ -19,12 +19,19 @@ class Command(BaseCommand):
         if ctl_name == 'controller':
             self.controller(*args[1:], **options)
 
-    def controller(self, module_name, func_name=None):
+    def create_controller(self, module_name, func_name=None):
         """
         Generate a new controller module or add a func in controller/module_name
 
         args:
-            module_name: relative path of new module, if module exists in current project, then just add a controller method to module_name
+            module_name: relative path of new module, if module exists in current 
+                project, then just add a controller method to module_name
             func_name: func in the module
         """
-        pass
+        top_dir = os.getcwd()
+        module_path = os.path.join(top_dir, module_name)
+        if os.path.exists(module_path):
+            if not func_name:
+                raise CommandError("module already exists")
+             
+

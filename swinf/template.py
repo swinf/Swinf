@@ -1,5 +1,6 @@
 import re
 import os
+import swinf
 from swinf import HTTPError
 from swinf.utils.html import html_escape
 from swinf.utils.text import touni
@@ -236,7 +237,7 @@ class SimpleTemplate(BaseTemplate, Codit):
 
 
 TEMPLATE_PATH = ['./view']
-from swinf import DEBUG, abort
+from swinf import abort
 
 @deco
 def template(*args, **kwargs):  
@@ -255,7 +256,7 @@ def template(*args, **kwargs):
     # TODO tplid can be abs path or source
     tplid = (id(lookup), path or source)
     # refresh template if DEBUG and load changes every time
-    if tplid not in TEMPLATES or DEBUG:
+    if tplid not in TEMPLATES or swinf.config.debug:
         settings = kwargs.pop('settings', {})
         if isinstance(source, adapter):
             TEMPLATES[tplid] = source

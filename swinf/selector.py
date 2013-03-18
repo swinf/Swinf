@@ -146,9 +146,13 @@ def join_handler_space(*module_paths):
     for path in module_paths:
         path = path.strip()
         # TODO use regrex to verify the reliability of path
+        print 'import path: ', path
         exec "import %s" % path
+        #client_module = __import__(path)
+        #print 'client_module', client_module
         try:
             exec "handle_space = %s.__handlespace__" % path
+            #handle_space = client_module.__handlespace__
         except:
             print ".. tranverse controller >> skip module: %s" % path
             continue
