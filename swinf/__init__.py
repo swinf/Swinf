@@ -4,6 +4,7 @@ __license__ = 'MIT'
 
 import cgi
 import Cookie
+from Cookie import SimpleCookie
 import os
 import mimetypes
 import threading
@@ -11,7 +12,7 @@ import time
 import traceback
 from urlparse import parse_qs
 from swinf.utils.functional import DictProperty
-from swinf.utils import Storage
+from swinf.utils import Storage, MyBuffer
 from swinf.selector import *
 
 
@@ -67,6 +68,9 @@ class SwinfException(Exception):
     """ Base Exception"""
     pass
 
+class SwinfError(SwinfException):
+    def __init__(self, info):
+        self.info = info
 
 class HTTPError(SwinfException):
     """ Break the execution and instantly jump to error handler. """
@@ -84,14 +88,53 @@ class BreakSwinf(SwinfException):
         self.output = output
 
 
-ENVIRON = None
+class NotImplementAdapterError(SwinfError):
+    def __init__(self, subcls, cls):
+        super(self, SwinfError).__init__("class %s should implement %s" % subcls.__name__, cls.__name__)
 
-def bind_environ(env):
-    """ Bind local project's settings to Swinf's core environment. """
-    global ENVIRON
-    ENVIRON = env
+
+# ----------- hooks -----------------
+class HandlerHookAdapter(object):
+    """ Adapter for WSGIHandler hooks. 
+    start() before handler() run, and end() finally.  """
+    def hook_start(self):
+        raise NotImplementedError
+    def hook_end(self):
+        raise NotImplementedError
+
+
+class HooksAdapter(dict):
+    """ Adapter for hook container. 
+    hooks can be used to insert process to another process.  """
+    def add_processor(self, name, pros):
+        self[name] = pros
+    def processors(self):
+        return self.values()
+    def __repr__(self):
+        return '<HandlerHooks ' + dict.__repr__(self) + '>'
+
+
+class HandlerHooks(HooksAdapter):
+    """ Containing all processors to run when WSGIHandler is called.  
+    run processor.start() before, and finally processor.end()
+    """
+    def add_processor(self, name, pros_obj):
+        if not issubclass(pros_obj.__class__, HandlerHookAdapter):
+            raise NoHandlerHookAdapterError(pros_obj.__class__, HandlerHookAdapter)
+        self[name] = pros_obj
+
+    def process(self, handler, **kwargs):
+        for key, hook in self.items():
+            hook.hook_start()
+        try:
+            return handler(**kwargs)
+        finally:
+            for key, hook in self.items():
+                hook.hook_end()
 
 # Implement WSGI 
+handler_hooks = HandlerHooks()
+_buffer = MyBuffer()
 
 def WSGIHandler(environ, start_response):
     """ The Swinf WSGI-handler """
@@ -104,13 +147,16 @@ def WSGIHandler(environ, start_response):
     try:
         handler, args = match_url(request.path, request.method)
         if not handler:
-            raise HTTPError(404, r"<h1>Not found</h1>")
-        output = handler(**args)
+            raise HTTPError(404, r"Not found")
+        global handler_hooks
+        output = handler_hooks.process(handler, **args)
+        #output = handler(**args)
     except BreakSwinf, shard:
         output = shard.output
     except Exception, exception:
         response.status = getattr(exception, 'http_status', 500)
         errorhandler = ERROR_HANDLER.get(response.status, None)
+
         if errorhandler:
             try:
                 output = errorhandler(exception)
@@ -118,9 +164,11 @@ def WSGIHandler(environ, start_response):
                 output = "Exception within error handler! application stoped!"
         else:
             if config.debug:
-                output = "Exception %s: %s" % (exception.__class__.__name__, str(exception))
+                _buffer.clean()
+                traceback.print_exc(limit=2, file=_buffer)
+                output = "<h1>Exception %s:</h1> <br/><pre>%s</pre>" % (exception.__class__.__name__, _buffer.source)
             else:
-                output = "Unhandled exception: Application stopped"
+                output = "<h1>Unhandled exception:Application stopped</h1><br/><h2>%s</h2>" % str(exception)
 
         if response.status == 500:
             request._environ['wsgi.errors'].write("Error (500) on '%s': %s\n" % (request.path, exception))
@@ -217,16 +265,13 @@ class Request(threading.local):
             self._GETPOST = dict(self.GET)
             self._GETPOST.update(self.POST)
 
-    @DictProperty('_environ', 'swinf.cookies', read_only=True)
+    @DictProperty('_environ', 'swinf.request.cookies', read_only=True)
     def COOKIES(self):
-        """ Returns a dict with COOKIES. """
-        if self._COOKIES is None:
-            raw_dict = Cookie.SimpleCookie(self._environ.get('HTTP_COOKIE', ''))
-            self._COOKIES = {}
-            for cookie in raw_dict.values():
-                self._COOKIES[cookie.key] = cookie.value
+        cookies = SimpleCookie(self._environ.get('HTTP_COOKIE',''))
+        self._COOKIES = {}
+        for cookie in cookies.values():
+            self._COOKIES[cookie.key] = cookie.value
         return self._COOKIES
-
 
 
 class Response(threading.local):
