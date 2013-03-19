@@ -1,4 +1,8 @@
+# route selector module
+# define route and corresponding handler here
+# borrow Route from bottle.py (http://bottlepy.org/docs/dev/)
 import re
+import inspect
 
 
 ROUTES_SIMPLE = {}
@@ -60,18 +64,6 @@ def route(url, **kargs):
 
 
 __handlespace__ = None
-
-
-def bind_environ(handlespace):
-    """ Bind application's local environ to swinf's global environ. 
-    this is the first process: 
-
-    Example:
-        __handlespace__ = {}
-        bind_environ(__handlespace__)
-    """
-    global __handlespace__
-    __handlespace__ = handlespace
 
 
 def handler_walk(control_dir = "controller/", skip_prefix=True):
@@ -180,6 +172,13 @@ def handler(method="GET"):
         then you can access `model.hello` handler model.func  by route: '/model/hello'
     """
     def wrapper(func):
+        # connect to local __handlespace__
+        caller = inspect.currentframe().f_back
+        local_globals = caller.f_globals
+        if '__handlespace__' not in local_globals:
+            local_globals['__handlespace__'] = {}
+            global __handlespace__
+            __handlespace__ = local_globals['__handlespace__']
         add_handler(func.__name__, method)
         return func
     return wrapper

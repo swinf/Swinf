@@ -480,4 +480,3 @@ def error500(exception):
         return "<br>\n".join(traceback.format_exc(10).splitlines()).replace('  ','&nbsp;&nbsp;')
     else:
         return """<b>Error:</b> Internal server error."""
-
