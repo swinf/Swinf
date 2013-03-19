@@ -105,11 +105,7 @@ In swinf, there is no `urls.py`-like config file, instead, there are two simple 
 .. code-block:: python
 
     # module1.py
-
-    from swinf.selector import handler, bind_eviron
-
-    __handlespace__ = {}
-    bind_eviron(__handlespace__)
+    from swinf.selector import handler
 
     # --------- your code here -----------
 
