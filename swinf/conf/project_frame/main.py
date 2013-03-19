@@ -33,7 +33,7 @@ def script(path):
 
 
 if __name__ == '__main__':
-    if swinf.debug:
+    if swinf.config.debug:
         from swinf.utils import reloader
         reloader.main(swinf.run)
     else:
