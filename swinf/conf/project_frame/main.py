@@ -26,11 +26,15 @@ def style(path):
 @route("/script/:path")
 def script(path):
     return swinf.send_file(path, root=os.path.join(static_dir, 'script'))
-
-
 # --------------- your code here --------------------------
 
 
 
+
+
 if __name__ == '__main__':
-    swinf.run()
+    if swinf.debug:
+        from swinf.utils import reloader
+        reloader.main(swinf.run)
+    else:
+        swinf.run()
