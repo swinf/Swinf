@@ -9,22 +9,19 @@ __all__ = [
     "Storage", "ThreadedDict",
 ]
 
-class MyBuffer:
-    def __init__(self):
-        self._buffer = []
-
+class MyBuffer(list):
     def write(self, strr):
-        self._buffer.append(strr)
+        self.append(strr)
 
     def clean(self):
-        del self._buffer[:]
+        del self[:]
 
     def flush(self):
         pass
-
     @property
     def source(self):
-        return '\n'.join(self._buffer)
+        return '\n'.join(self)
+
 
 class Storage(dict):
     """

@@ -1,7 +1,9 @@
 import re
 import os
+import sys
 import swinf
 from swinf import HTTPError
+from swinf.utils import MyBuffer
 from swinf.utils.html import html_escape
 from swinf.utils.text import touni
 from swinf.utils.functional import cached_property
@@ -10,9 +12,6 @@ from swinf.debug import deco
 class TemplateError(HTTPError):
     def __init__(self, message):
         HTTPError.__init__(self, 500, message)
-
-# cache compiled templates
-TEMPLATES = {}
 
 class BaseTemplate:
     """
@@ -207,12 +206,13 @@ class SimpleTemplate(BaseTemplate, Codit):
     @deco
     def render(self, *args, **kwargs):
         for dictarg in args: kwargs.update(dictarg)
-        stdout = []
+        stdout = MyBuffer()
         self.execute(stdout, kwargs)
-        return ''.join(stdout)
+        return stdout.source
     
     @deco
     def execute(self, _stdout, *args, **kwargs):
+        self._stdout = _stdout
         for dictarg in args: kwargs.update(dictarg)
         env = self.defaults.copy()
         # TODO add more template function here
@@ -220,11 +220,21 @@ class SimpleTemplate(BaseTemplate, Codit):
             '_printlist': _stdout.extend,
             '_escape': self._escape,
             '_str': self._str,
+            '_include': self.subtemplate,
         })
         env.update(kwargs)
+        #__stdout = sys.stdout
+        #sys.stdout = _stdout
         eval(self.compile, env)
+        #sys.stdout = __stdout
         self.__clean()
         return env
+
+    def subtemplate(self, path, *args, **kwargs):
+        for dictarg in args: kwargs.update(dictarg)
+        if path not in TEMPLATES:
+            TEMPLATES[path] = self.__class__(path=path, lookup=self.lookup)
+        return TEMPLATES[path].execute(self._stdout, **kwargs)
 
     def __clean(self):
         """
@@ -235,6 +245,9 @@ class SimpleTemplate(BaseTemplate, Codit):
         for m in (self.source):
             del m
 
+
+# cache compiled templates
+TEMPLATES = {}
 
 TEMPLATE_PATH = ['./view']
 from swinf import abort
