@@ -77,7 +77,8 @@ class CopyFrame(object):
         import shutil
         # If it's not a valid directory name.
         if not re.search(r'^\w+$', project_name): 
-            raise CommandError("%s is not a valid project name. Please use only numbers, letters and underscores." % project_name)
+            raise CommandError("%s is not a valid project name. \
+                    Please use only numbers, letters and underscores." % project_name)
 
         try:
             top_dir = os.path.join(directory, project_name)
