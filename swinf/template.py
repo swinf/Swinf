@@ -7,7 +7,6 @@ from swinf.utils import MyBuffer
 from swinf.utils.html import html_escape
 from swinf.utils.text import touni
 from swinf.utils.functional import cached_property
-from swinf.debug import deco
 
 class TemplateError(HTTPError):
     def __init__(self, message):
@@ -22,7 +21,6 @@ class BaseTemplate:
     defaults = {}   #used in render
     lookup=['./views/']
 
-    @deco
     def __init__(self, source=None, path=None, lookup=[], encoding='utf8', **settings):
         """
         args:
@@ -192,7 +190,6 @@ class Codit(object):
 
 
 class SimpleTemplate(BaseTemplate, Codit):
-    @deco
     def __init__(self, source=None, path=None, lookup=[], encoding='utf8', **settings):
         BaseTemplate.__init__(self, source, path, lookup, encoding, **settings)
         Codit.__init__(self, self.source, encoding)
@@ -203,14 +200,12 @@ class SimpleTemplate(BaseTemplate, Codit):
         if noescape:
             self._str, self._escape = self._escape, self._str
 
-    @deco
     def render(self, *args, **kwargs):
         for dictarg in args: kwargs.update(dictarg)
         stdout = MyBuffer()
         self.execute(stdout, kwargs)
         return stdout.source
     
-    @deco
     def execute(self, _stdout, *args, **kwargs):
         self._stdout = _stdout
         for dictarg in args: kwargs.update(dictarg)
@@ -252,7 +247,6 @@ TEMPLATES = {}
 TEMPLATE_PATH = ['./view']
 from swinf import abort
 
-@deco
 def template(*args, **kwargs):  
     '''
     Get a rendered template as a string iterator.
