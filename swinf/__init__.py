@@ -3,7 +3,6 @@ __version__ = ('0', '0', '4')
 __license__ = 'MIT'
 
 import cgi
-import Cookie
 from Cookie import SimpleCookie
 import os
 import mimetypes
@@ -11,9 +10,18 @@ import threading
 import time
 import traceback
 from urlparse import parse_qs
+from swinf.core.exceptions import *
+from swinf.core.middleware import HandlerHooks
+from swinf.selector import match_url
 from swinf.utils.functional import DictProperty
 from swinf.utils import Storage, MyBuffer
-from swinf.selector import *
+
+
+# global config of swinf
+config = Storage({
+    'debug':False,
+    'optimize':False,
+})
 
 
 ERROR_HANDLER = {}
@@ -60,77 +68,6 @@ HTTP_CODES = {
     504: 'GATEWAY TIMEOUT',
     505: 'HTTP VERSION NOT SUPPORTED',
 }
-
-
-# Exceptions and Events ------------------------------------------------
-
-class SwinfException(Exception):
-    """ Base Exception"""
-    pass
-
-class SwinfError(SwinfException):
-    def __init__(self, info):
-        self.info = info
-
-class HTTPError(SwinfException):
-    """ Break the execution and instantly jump to error handler. """
-    def __init__(self, status, text):
-        self.output = text
-        self.http_status = int(status)
-
-    def __str__(self):
-        return self.output
-
-
-class BreakSwinf(SwinfException):
-    """ Just a way to break current execution and instantly jump to call start_response() and return the content of output"""
-    def __init__(self, output):
-        self.output = output
-
-
-class NotImplementAdapterError(SwinfError):
-    def __init__(self, subcls, cls):
-        super(self, SwinfError).__init__("class %s should implement %s" % subcls.__name__, cls.__name__)
-
-
-# ----------- hooks -----------------
-class HandlerHookAdapter(object):
-    """ Adapter for WSGIHandler hooks. 
-    start() before handler() run, and end() finally.  """
-    def hook_start(self):
-        raise NotImplementedError
-    def hook_end(self):
-        raise NotImplementedError
-
-
-class HooksAdapter(dict):
-    """ Adapter for hook container. 
-    hooks can be used to insert process to another process.  """
-    def add_processor(self, name, pros):
-        self[name] = pros
-    def processors(self):
-        return self.values()
-    def __repr__(self):
-        return '<HandlerHooks ' + dict.__repr__(self) + '>'
-
-
-class HandlerHooks(HooksAdapter):
-    """ Containing all processors to run when WSGIHandler is called.  
-    run processor.start() before, and finally processor.end()
-    """
-    def add_processor(self, name, pros_obj):
-        if not issubclass(pros_obj.__class__, HandlerHookAdapter):
-            raise NoHandlerHookAdapterError(pros_obj.__class__, HandlerHookAdapter)
-        self[name] = pros_obj
-
-    def process(self, handler, **kwargs):
-        for key, hook in self.items():
-            hook.hook_start()
-        try:
-            return handler(**kwargs)
-        finally:
-            for key, hook in self.items():
-                hook.hook_end()
 
 # Implement WSGI 
 handler_hooks = HandlerHooks()
@@ -288,7 +225,7 @@ class Response(threading.local):
     @property
     def COOKIES(self):
         if not self._COOKIES:
-            self._COOKIES = Cookie.SimpleCookie()
+            self._COOKIES = SimpleCookie()
         return self._COOKIES
 
     def set_cookie(self, key, value, **kargs):
@@ -358,6 +295,7 @@ def redirect(url, code = 307):
     response.status = code
     response.header['Location'] = url
     raise BreakSwinf("")
+
 
 def send_file(filename, root="", guessmime = True, mimetype = 'text/plain'):
     """ Aborts execution and sends a static files as response. 
@@ -466,12 +404,6 @@ def run(server=WSGIRefServer, host='127.0.0.1', port=8080, optimize=False, **kar
 
 request = Request()
 response = Response()
-
-# global config of swinf
-config = Storage({
-    'debug':False,
-    'optimize':False,
-})
 
 @error(500)
 def error500(exception):
