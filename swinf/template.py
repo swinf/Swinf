@@ -1,16 +1,11 @@
 import re
 import os
-import sys
 import swinf
-from swinf import HTTPError
+from swinf import TemplateError
 from swinf.utils import MyBuffer
 from swinf.utils.html import html_escape
 from swinf.utils.text import touni
 from swinf.utils.functional import cached_property
-
-class TemplateError(HTTPError):
-    def __init__(self, message):
-        HTTPError.__init__(self, 500, message)
 
 class BaseTemplate:
     """
@@ -19,7 +14,7 @@ class BaseTemplate:
     extensions = ['', 'tpl', 'shtml']
     settings = {}
     defaults = {}   #used in render
-    lookup=['./views/']
+    lookup= swinf.config.template_lookup
 
     def __init__(self, source=None, path=None, lookup=[], encoding='utf8', **settings):
         """
@@ -218,10 +213,7 @@ class SimpleTemplate(BaseTemplate, Codit):
             '_include': self.subtemplate,
         })
         env.update(kwargs)
-        #__stdout = sys.stdout
-        #sys.stdout = _stdout
         eval(self.compile, env)
-        #sys.stdout = __stdout
         self.__clean()
         return env
 

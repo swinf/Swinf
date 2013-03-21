@@ -21,6 +21,8 @@ from swinf.utils import Storage, MyBuffer
 config = Storage({
     'debug':False,
     'optimize':False,
+    'template_lookup': [r'./view/'],
+    'static_file_path': r'./view/static',
 })
 
 
@@ -380,26 +382,36 @@ class WSGIRefServer(ServerAdaper):
         srv.serve_forever()
 
 
-def run(server=WSGIRefServer, host='127.0.0.1', port=8080, optimize=False, **kargs):
-    """ Runs swinf as a web server, using Python's built-in swgiref implementation by default.  """
+def run(server=WSGIRefServer, host='127.0.0.1', \
+            port=8080, optimize=False, **kargs):
+    """ Runs swinf as a web server, using Python's built-in swgiref implementation by default."""
 
-    config.optimize = bool(optimize)
-    quiet = bool('quiet' in kargs and kargs['quiet'])
-    if isinstance(server, type) and issubclass(server, ServerAdaper):
-        server = server(host=host, port=port, **kargs)
-    if not isinstance(server, ServerAdaper):
-        raise RuntimeError("Server must be a subclass of ServerAdaper")
-    if not quiet:
-        print "Swinf server starting up (using %s)..." % repr(server)
-        print "Listening on http://%s:%d" % (server.host, server.port)
-        print "Use Ctrl-C to quit."
-        print 
+    def _run(server, host, port, optimize, **kargs):
+        config.optimize = bool(optimize)
+        quiet = bool('quiet' in kargs and kargs['quiet'])
+        if isinstance(server, type) and issubclass(server, ServerAdaper):
+            server = server(host=host, port=port, **kargs)
+        if not isinstance(server, ServerAdaper):
+            raise RuntimeError("Server must be a subclass of ServerAdaper")
+        if not quiet:
+            print "Swinf server starting up (using %s)..." % repr(server)
+            print "Listening on http://%s:%d" % (server.host, server.port)
+            print "Use Ctrl-C to quit."
+            print 
 
-    try:
-        server.run(WSGIHandler)
-    except KeyboardInterrupt:
-        # TODO specifically Ctrl-C
-        print "Shuting down ..."
+        try:
+            server.run(WSGIHandler)
+        except KeyboardInterrupt:
+            # TODO specifically Ctrl-C
+            print "Shuting down ..."
+
+    if config.debug:
+        from swinf.utils import reloader
+        reloader.main(_run, server, host, port, optimize, **kargs)
+    else:
+        _run(server, host, port, optimize, **kargs)
+
+
 
 
 request = Request()

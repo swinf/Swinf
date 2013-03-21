@@ -119,6 +119,7 @@ class Reloader(object):
                 return exit_code
 
     def python_reloader(self, main_func, *args, **kwargs):
+        print '%s python reload thread' % str(time.ctime())
         if os.environ.get("RUN_MAIN") == "true":
             thread.start_new_thread(main_func, args, kwargs)
             try:
@@ -135,7 +136,8 @@ class Reloader(object):
             except KeyboardInterrupt:
                 pass
             
-    def jython_reloader(self, main_func, args, kwargs):
+    def jython_reloader(self, main_func, *args, **kwargs):
+        print '%s jython reload thread' % str(time.ctime())
         from _systemrestart import SystemRestart
         thread.start_new_thread(main_func, args)
         while True:
@@ -145,7 +147,7 @@ class Reloader(object):
 
 reloader = Reloader()
 
-def main(main_func, args=None, kwargs=None):
+def main(main_func, *args, **kwargs):
     if args is None:
         args = ()
     if kwargs is None:

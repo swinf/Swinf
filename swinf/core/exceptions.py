@@ -29,4 +29,8 @@ class NotImplementAdapterError(SwinfError):
         super(self, SwinfError).__init__("class %s should implement %s" % subcls.__name__, cls.__name__)
 
 
+class TemplateError(HTTPError):
+    def __init__(self, message):
+        HTTPError.__init__(self, 500, message)
+
 
