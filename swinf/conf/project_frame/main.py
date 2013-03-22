@@ -1,7 +1,7 @@
 import swinf
 from swinf.selector import handler_walk
 import swinf.utils.default_handlers
-import settings
+from settings import config
 
 handler_walk("controller/")
 # --------------- your code here --------------------------
@@ -10,4 +10,4 @@ handler_walk("controller/")
 
 
 if __name__ == '__main__':
-    swinf.run()
+    swinf.run(config.server_host, config.server_port)

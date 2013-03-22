@@ -6,6 +6,7 @@ import cgi
 from Cookie import SimpleCookie
 import os
 import mimetypes
+import sys
 import threading
 import time
 import traceback
@@ -382,8 +383,8 @@ class WSGIRefServer(ServerAdaper):
         srv.serve_forever()
 
 
-def run(server=WSGIRefServer, host='127.0.0.1', \
-            port=8080, optimize=False, **kargs):
+def run(host='127.0.0.1', port=8080, \
+            server=WSGIRefServer, optimize=False, **kargs):
     """ Runs swinf as a web server, using Python's built-in swgiref implementation by default."""
 
     def _run(server, host, port, optimize, **kargs):
