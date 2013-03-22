@@ -1,6 +1,6 @@
 from swinf import config
 
-config.debug = False
+config.debug = True
 
 config.template_lookup = [r'./view/']
 
