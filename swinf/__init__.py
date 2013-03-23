@@ -6,15 +6,13 @@ import cgi
 from Cookie import SimpleCookie
 import os
 import mimetypes
-import sys
 import threading
 import time
 import traceback
 from urlparse import parse_qs
 from swinf.core.exceptions import *
-from swinf.core.middleware import HandlerHooks
-from swinf.selector import match_url, route, \
-        handler, handler_walk, join_handler_space
+from swinf.core.middleware import HooksAdapter
+from swinf.core.selector import *
 from swinf.utils.functional import DictProperty
 from swinf.utils import Storage, MyBuffer
 
@@ -46,49 +44,27 @@ config = Storage({
 
 
 ERROR_HANDLER = {}
-HTTP_CODES = {
-    100: 'CONTINUE',
-    101: 'SWITCHING PROTOCOLS',
-    200: 'OK',
-    201: 'CREATED',
-    202: 'ACCEPTED',
-    203: 'NON-AUTHORITATIVE INFORMATION',
-    204: 'NO CONTENT',
-    205: 'RESET CONTENT',
-    206: 'PARTIAL CONTENT',
-    300: 'MULTIPLE CHOICES',
-    301: 'MOVED PERMANENTLY',
-    302: 'FOUND',
-    303: 'SEE OTHER',
-    304: 'NOT MODIFIED',
-    305: 'USE PROXY',
-    306: 'RESERVED',
-    307: 'TEMPORARY REDIRECT',
-    400: 'BAD REQUEST',
-    401: 'UNAUTHORIZED',
-    402: 'PAYMENT REQUIRED',
-    403: 'FORBIDDEN',
-    404: 'NOT FOUND',
-    405: 'METHOD NOT ALLOWED',
-    406: 'NOT ACCEPTABLE',
-    407: 'PROXY AUTHENTICATION REQUIRED',
-    408: 'REQUEST TIMEOUT',
-    409: 'CONFLICT',
-    410: 'GONE',
-    411: 'LENGTH REQUIRED',
-    412: 'PRECONDITION FAILED',
-    413: 'REQUEST ENTITY TOO LARGE',
-    414: 'REQUEST-URI TOO LONG',
-    415: 'UNSUPPORTED MEDIA TYPE',
-    416: 'REQUESTED RANGE NOT SATISFIABLE',
-    417: 'EXPECTATION FAILED',
-    500: 'INTERNAL SERVER ERROR',
-    501: 'NOT IMPLEMENTED',
-    502: 'BAD GATEWAY',
-    503: 'SERVICE UNAVAILABLE',
-    504: 'GATEWAY TIMEOUT',
-    505: 'HTTP VERSION NOT SUPPORTED',
-}
+
+from swinf.utils.html import HTTP_CODES
+
+class HandlerHooks(HooksAdapter):
+    """ Containing all processors to run when WSGIHandler is called.  
+    run processor.start() before, and finally processor.end()
+    """
+    def add_processor(self, name, pros_obj):
+        if not issubclass(pros_obj.__class__, HandlerHookAdapter):
+            raise NotImplementAdapterError(pros_obj.__class__, HandlerHookAdapter)
+        self[name] = pros_obj
+
+    def process(self, handler, **kwargs):
+        for key, hook in self.items():
+            hook.hook_start()
+        try:
+            return handler(**kwargs)
+        finally:
+            for key, hook in self.items():
+                hook.hook_end()
+
 
 # Implement WSGI 
 handler_hooks = HandlerHooks()
@@ -104,6 +80,7 @@ def WSGIHandler(environ, start_response):
     # Request dynamic route
     try:
         handler, args = match_url(request.path, request.method)
+        print 'handler: ', handler
         if not handler:
             raise HTTPError(404, r"Not found")
         global handler_hooks
@@ -403,7 +380,8 @@ class WSGIRefServer(ServerAdaper):
 
 def run(host='127.0.0.1', port=8080, \
             server=WSGIRefServer, optimize=False, **kargs):
-    """ Runs swinf as a web server, using Python's built-in swgiref implementation by default."""
+    """ Runs swinf as a web server, using Python's 
+        built-in swgiref implementation by default."""
 
     def _run(server, host, port, optimize, **kargs):
         config.optimize = bool(optimize)
