@@ -1,20 +1,20 @@
 import re
 import os
 import swinf
-from swinf import TemplateError
+from swinf import TemplateError, config
 from swinf.utils import MyBuffer
+from swinf.utils.functional import cached_property
 from swinf.utils.html import html_escape
 from swinf.utils.text import touni
-from swinf.utils.functional import cached_property
 
 class BaseTemplate:
     """
     Base class and minimal API for template adapters
     """
-    extensions = ['', 'tpl', 'shtml']
+    extensions = config.template.extensions
     settings = {}
     defaults = {}   #used in render
-    lookup= swinf.config.template_lookup
+    lookup= swinf.config.template.lookup
 
     def __init__(self, source=None, path=None, lookup=[], encoding='utf8', **settings):
         """
@@ -63,13 +63,12 @@ class Codit(object):
     the compiled code object can be easily cached
     """
     indent_space = '    '
-    blocks = ('if', 'elif', 'else', 'try', 'except', 'finally', \
-              'for', 'while', 'with', 'def', 'class')
-    dedent_blocks = ('elif', 'else', 'except', 'finally')
+    blocks = config.template.blocks
+    dedent_blocks = config.template.dedent_blocks
     # TODO add settings option
-    single_line_code = '%%'
-    multi_code_begin = '{%'
-    multi_code_end = '%}'
+    single_line_code = config.template.single_line_code
+    multi_code_begin = config.template.multi_code_begin
+    multi_code_end = config.template.multi_code_end
 
 
     def __init__(self, template, encoding='utf8'):

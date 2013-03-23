@@ -4,6 +4,10 @@
 import re
 import inspect
 
+__all__ = [
+    "match_url", "route", "handler",
+    "handler_walk", "join_handler_space",
+]
 
 ROUTES_SIMPLE = {}
 ROUTES_REGEXP = {}

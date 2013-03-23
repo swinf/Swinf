@@ -39,3 +39,39 @@ class HandlerHooks(HooksAdapter):
             for key, hook in self.items():
                 hook.hook_end()
 
+
+import base64
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
+
+class SessionStoreAdapter:
+    """Adapter for session stores"""
+
+    def __contains__(self, key):
+        raise NotImplementedError
+
+    def __getitem__(self, key):
+        raise NotImplementedError
+
+    def __setitem__(self, key, value):
+        raise NotImplementedError
+
+    def cleanup(self, timeout):
+        """removes all the expired sessions"""
+        raise NotImplementedError
+
+    def items(self, session_id):
+        return self[session_id].items()
+
+    def encode(self, session_dict):
+        """encodes session dict as a string"""
+        pickled = pickle.dumps(session_dict)
+        return base64.encodestring(pickled)
+
+    def decode(self, session_data):
+        """decodes the data to get back the session dict """
+        pickled = base64.decodestring(session_data)
+        return pickle.loads(pickled)

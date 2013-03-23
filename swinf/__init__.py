@@ -13,17 +13,35 @@ import traceback
 from urlparse import parse_qs
 from swinf.core.exceptions import *
 from swinf.core.middleware import HandlerHooks
-from swinf.selector import match_url
+from swinf.selector import match_url, route, \
+        handler, handler_walk, join_handler_space
 from swinf.utils.functional import DictProperty
 from swinf.utils import Storage, MyBuffer
 
 
-# global config of swinf
+# global default config of swinf
+# can work well when user's settings.py doesn't work
 config = Storage({
     'debug':False,
     'optimize':False,
-    'template_lookup': [r'./view/'],
-    'static_file_path': r'./view/static',
+
+    'template' : Storage({
+
+        # extensions of html template file
+        'extensions' :  ['', 'tpl', 'shtml'],
+        'lookup':       [r'./view/'],
+        'static_file_path':     r'./view/static',
+
+        # code blocks
+        'blocks' :  ('if', 'elif', 'else', 'try', \
+                    'except', 'finally', \
+                    'for', 'while', 'with', 'def', 'class'),
+
+        'dedent_blocks' :('elif', 'else', 'except', 'finally'),
+        'single_line_code':     '%%',
+        'multi_code_begin':     '{%',
+        'multi_code_end':       '%}', 
+    })
 })
 
 
