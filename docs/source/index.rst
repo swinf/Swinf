@@ -88,8 +88,63 @@ It requires no setup at all and is an incredibly painless way to get your applic
 
 Of course this is a very simple example, but it shows the basic concept of how applications are built with Bottle. Continue reading and you'll see what else is possible.
 
+Request Routing
+======================
+Swinf contains two route model. One is ``Auto Routing`` which automatically link handler to a automatically generated route. 
+The other one is ``Dymatical Routing`` which we borrow from bottle.py(http://bottlepy.org).
 
+Auto Routing
+--------------
+In the last chapter, we built a very simple web application by creating a controller. Here is the example again.
+
+.. code-block:: python
     
+    # in helloworld/controller/greet.py
+    from swinf import handler
+
+    @handler("GET")
+    def hello():
+        return "Hello World!"
+
+and the :func:`handler()` decorator wrap the :func:`hello` and transform it to a handler. When the application server starts, 
+Swinf will scan the direcotry ``controller/`` and automatically link all handlers to their route.
+By default, ``auto route`` is the importing paths of handlers.
+
+In the above example, we define a handler :func:`controller.greet.hello`, and the ``auto route`` is ``/greet/hello`` overlooking the prefix ``controller``.
+
+The ``auto routing`` mechanism make route structure more clear, and you don't have to edit routes manually.
+
+
+Dymatic Routing
+------------------
+We borrowed ``Dymatic Routing`` from bottle.py. By ``Dymatic Routing``, you can controll a hander's route manually.
+
+For example:
+
+.. code:: python
+    
+    from swinf import route, handler
+
+    @route('/hello')
+    def hello():
+        return "Hello World!"
+
+    # auto-routing and dymatic-routing do not\
+    # affect each other
+    @handler("GET")
+    def response():
+
+The ``auto routing`` mechanism and ``dymatic routing`` mechanism do not affect each other, in other words, you can use them together.
+
+By ``dynamic routing`` mechanism, you can add tags or even regrex content to a route.
+
+
+
+
+
+
+
+
 
 Contents:
 
