@@ -1,6 +1,6 @@
 import os
 import swinf
-from swinf.selector import route
+from swinf.core.selector import route
 # ------------ you can change them ------------------------
 static_dir = os.path.join(os.getcwd(), swinf.config.template.static_file_path)
 @route("/static/:path")

@@ -7,6 +7,14 @@ from swinf.utils.functional import cached_property
 from swinf.utils.html import html_escape
 from swinf.utils.text import touni
 
+__all__ = (
+    "BaseTemplate", 
+    # container of user-defined extension method to SimpleTemplate
+    "extens", 
+    "SimpleTemplate",
+    "template",
+)
+
 class BaseTemplate:
     """
     Base class and minimal API for template adapters
@@ -182,6 +190,51 @@ class Codit(object):
                 self.codebuffer, self.template):
             del m
 
+# ------------- SimpleTemplate ----------------------------------
+from swinf.core.middleware import HooksAdapter
+
+class Extens(HooksAdapter):
+    """Add extens methods to SimpleTemplate engine
+    For example:
+
+    Define an extension method:
+    
+        def _import_script(_stdout, path):
+            script_path = \
+                "<script src='/static/script/%s'></script>" % path
+            _stdout.append(script_path)
+
+    You should use _stdout as the first parameter and append the \
+    content to _stdout if you want to insert the content into the \
+    final html source.
+    
+    extens.add('import_script', import_script)
+
+    then, you can use the new extension in the template file:
+    {%import_script('./jquery.js')%}"""
+
+    def __init__(self):
+        self.add = self.add_processor
+
+    def bind(self, _stdout):
+        self._stdout = _stdout
+
+    def add_all(self, dic):
+        """
+        Add multiple extens
+
+        args:
+            dic: a dic of key-extens
+
+        usage:
+            extens.add_all({
+                '_import_script':_import_script,
+                '_import_style':_import_style,
+            })
+        """
+        self.update(dic)
+
+extens = Extens() 
 
 class SimpleTemplate(BaseTemplate, Codit):
     def __init__(self, source=None, path=None, lookup=[], encoding='utf8', **settings):
@@ -210,7 +263,11 @@ class SimpleTemplate(BaseTemplate, Codit):
             '_escape': self._escape,
             '_str': self._str,
             '_include': self.subtemplate,
+            '_print': self._str,
         })
+        # add extens
+        global extens
+        env.update(extens)
         env.update(kwargs)
         eval(self.compile, env)
         self.__clean()

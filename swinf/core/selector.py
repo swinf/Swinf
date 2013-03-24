@@ -144,16 +144,18 @@ def join_handler_space(*module_paths):
         # TODO use regrex to verify the reliability of path
         print 'import path: ', path
         exec "import %s" % path
-        #client_module = __import__(path)
         #print 'client_module', client_module
         try:
             exec "handle_space = %s.__handlespace__" % path
+            #client_module = __import__(path)
+            global __handlespace__
+            __handlespace__ = handle_space
             #handle_space = client_module.__handlespace__
         except:
             print ".. tranverse controller >> skip module: %s" % path
             continue
-        for method in handle_space:
-            for handler in handle_space[method]:
+        for method in __handlespace__:
+            for handler in __handlespace__[method]:
                 handler_str = "%s.%s " % (path, handler)
                 route = '/' + handler_str.replace(".", "/").strip()
                 exec "handler  = %s" % handler_str
@@ -182,7 +184,7 @@ def handler(method="GET"):
         if '__handlespace__' not in local_globals:
             local_globals['__handlespace__'] = {}
             global __handlespace__
-            __handlespace__ = local_globals['__handlespace__']
+        __handlespace__ = local_globals['__handlespace__']
         add_handler(func.__name__, method)
         return func
     return wrapper
