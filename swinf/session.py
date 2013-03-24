@@ -9,6 +9,7 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle
+
 import swinf
 from swinf import HTTPError
 from swinf.utils import Storage, ThreadDict
@@ -69,6 +70,8 @@ session_id_opt = SessionIdOpt()
 class Session(swinf.HandlerHookAdapter):
     """
     Session management
+
+    work as a handler hook, and will insert process into WSGIHandler process.
     """
     def __init__(self, store, hook=None, initializer=None, config=session_config):
         self.store = store

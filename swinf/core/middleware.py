@@ -1,5 +1,3 @@
-from swinf.core.exceptions import NotImplementAdapterError
-
 # ----------- hooks -----------------
 class HooksAdapter(dict):
     """ Adapter for hook container. 
