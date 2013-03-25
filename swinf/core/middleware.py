@@ -3,6 +3,11 @@ class HooksAdapter(dict):
     """ Adapter for hook container. 
     hooks can be used to insert process to another process.  """
     def add_processor(self, name, pros):
+        """
+        args:
+            name: name of pros
+            pros: object of some HookAdapter
+        """
         self[name] = pros
     def processors(self):
         return self.values()

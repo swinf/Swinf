@@ -1,8 +1,12 @@
+import os
+import swinf
 from swinf import config
 # import default view extensions
 import view  
 # use default handlers
 import swinf.utils.default_handlers 
+
+PROJECT_PATH = os.path.dirname(__file__)
 
 config.debug = True
 config.optimize = False
@@ -29,3 +33,6 @@ config.template.update({
 # built-in server settings
 config.server_host = 'localhost'
 config.server_port = 8080
+
+# config database
+#config.db = 'sqlite:///' + os.path.join(PROJECT_PATH, 'data.db')

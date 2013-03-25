@@ -1,5 +1,11 @@
 # Session module.
 # Borrowed from web.py project (http://webpy.org/)
+__all__ = [
+    "SessionExpired", "session_config", 
+    "session_id_opt", "Session",
+    "StoreAdapter", "DiskStore", "ShelfStore",
+]
+
 
 import re
 import os, time, datetime, random, base64
@@ -13,13 +19,8 @@ except ImportError:
 import swinf
 from swinf import HTTPError
 from swinf.utils import Storage, ThreadDict
+from swinf.core.middleware import HandlerHookAdapter, SessionStoreAdapter
 sha1 = hashlib.sha1
-
-__all__ = [
-    "SessionExpired", "session_config", 
-    "session_id_opt", "Session",
-    "StoreAdapter", "DiskStore", "ShelfStore",
-]
 
 class SessionExpired(HTTPError):
     def __init__(self, message):
@@ -67,7 +68,7 @@ class SessionIdOpt(object):
 session_id_opt = SessionIdOpt()
 
 
-class Session(swinf.HandlerHookAdapter):
+class Session(HandlerHookAdapter):
     """
     Session management
 
@@ -209,8 +210,6 @@ class Session(swinf.HandlerHookAdapter):
             self.__data_changed = True
         else:
             return self.__data_changed
-
-from swinf.core.middleware import SessionStoreAdapter
 
 
 class DiskStore(SessionStoreAdapter):

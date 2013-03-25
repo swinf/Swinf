@@ -1,13 +1,13 @@
 # The following classes or methods are borrowed from web_py (http://webpy.org/)
 # [ThreadedDict, Storage]
 
-
-from threading import local as threadlocal
-
 __all__ = [
     "MyBuffer",
-    "Storage", "ThreadedDict",
+    "Storage", "ThreadDict",
 ]
+
+
+from threading import local as threadlocal
 
 class MyBuffer(list):
     def write(self, strr):

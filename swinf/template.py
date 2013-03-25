@@ -1,3 +1,11 @@
+__all__ = (
+    "BaseTemplate", 
+    # container of user-defined extension method to SimpleTemplate
+    "extens", 
+    "SimpleTemplate",
+    "template",
+)
+
 import re
 import os
 import swinf
@@ -6,14 +14,6 @@ from swinf.utils import MyBuffer
 from swinf.utils.functional import cached_property
 from swinf.utils.html import html_escape
 from swinf.utils.text import touni
-
-__all__ = (
-    "BaseTemplate", 
-    # container of user-defined extension method to SimpleTemplate
-    "extens", 
-    "SimpleTemplate",
-    "template",
-)
 
 class BaseTemplate:
     """

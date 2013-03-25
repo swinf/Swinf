@@ -10,15 +10,16 @@ import threading
 import time
 import traceback
 from urlparse import parse_qs
+from swinf.core import ctx
 from swinf.core.exceptions import *
-from swinf.core.middleware import HooksAdapter
+from swinf.core.middleware import HooksAdapter, HandlerHookAdapter
 from swinf.core.selector import *
 from swinf.utils.functional import DictProperty
 from swinf.utils import Storage, MyBuffer
 
 
 # global default config of swinf
-# can work well when user's settings.py doesn't work
+# can work well when user's settings.py doesn't exists
 config = Storage({
     'debug':False,
     'optimize':False,
@@ -41,7 +42,6 @@ config = Storage({
         'multi_code_end':       '%}', 
     })
 })
-
 
 ERROR_HANDLER = {}
 
