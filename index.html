@@ -1,37 +1,42 @@
-<!DOCTYPE html>
+<!doctype html>
+<!-- The Time Machine GitHub pages theme was designed and developed by Jon Rohan, on Feb 7, 2012. -->
+<!-- Follow him for fun. http://twitter.com/jonrohan. Tail his code on http://github.com/jonrohan -->
 <html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-  <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Swinf : a simple micro web framework for python" />
+  <link rel="stylesheet" href="stylesheets/stylesheet.css" media="screen"/>
+  <link rel="stylesheet" href="stylesheets/pygment_trac.css"/>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="javascripts/script.js"></script>
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+  <title>Swinf</title>
+  <meta name="description" content="a simple micro web framework for python">
 
-    <title>Swinf</title>
-  </head>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
 
-  <body>
+</head>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/swinf/Swinf">View on GitHub</a>
+<body>
 
-          <h1 id="project_title">Swinf</h1>
-          <h2 id="project_tagline">a simple micro web framework for python</h2>
-
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/swinf/Swinf/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/swinf/Swinf/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h1>Swinf Web Frame</h1>
+  <div class="wrapper">
+    <header>
+      <h1 class="title">Swinf</h1>
+    </header>
+    <div id="container">
+      <p class="tagline">a simple micro web framework for python</p>
+      <div id="main" role="main">
+        <div class="download-bar">
+        <div class="inner">
+          <a href="https://github.com/swinf/Swinf/tarball/master" class="download-button tar"><span>Download</span></a>
+          <a href="https://github.com/swinf/Swinf/zipball/master" class="download-button zip"><span>Download</span></a>
+          <a href="https://github.com/swinf/Swinf" class="code">View Swinf on GitHub</a>
+        </div>
+        <span class="blc"></span><span class="trc"></span>
+        </div>
+        <article class="markdown-body">
+          <h1>Swinf Web Frame</h1>
 
 <p>Swinf is a simple micro-framework for small web application and has no dependencies other than the Python Standard Liberaty.</p>
 
@@ -39,16 +44,16 @@
 
 <h2>Commands</h2>
 
-<p>run command : <strong>swinf-admin.py startproject newproject</strong> and swinf will create a project directory.</p>
+<p>run command : <code>swinf-admin.py startproject newproject</code> and swinf will create a project directory.</p>
 
-<p>Inside current project directory, there are a <strong>main.py</strong> and three subdirectories:</p>
+<p>Inside current project directory, there are a <code>main.py</code> and three subdirectories:</p>
 
-<p>controller::</p>
+<p>controller:</p>
 
 <pre><code>containing controllers.
 </code></pre>
 
-<p>view::</p>
+<p>view:</p>
 
 <pre><code>containing view template files.
 
@@ -65,7 +70,7 @@ subdirecties:
     static/files: other static files here
 </code></pre>
 
-<p>model::</p>
+<p>model:</p>
 
 <pre><code>you can put your database controlling code here.
 </code></pre>
@@ -78,43 +83,41 @@ subdirecties:
 
 <p>the tpl syntax follows below</p>
 
-<p>.. code-block:: html</p>
+<div class="highlight"><pre>
+    <span class="c">&lt;!-- in a tpl file --&gt;</span>
 
-<pre><code>&lt;!-- in a tpl file --&gt;
+    {%
+    # multiline code
 
-{%
-# multiline code
+    def bold_wrapper(txt):
+        return "<span class="nt">&lt;b&gt;</span>" + txt + "<span class="nt">&lt;/b&gt;</span>"
+    endef
+    %}
 
-def bold_wrapper(txt):
-    return "&lt;b&gt;" + txt + "&lt;/b&gt;"
-endef
-%}
+    %% # sigleline code
+    %% if name:
+    <span class="nt">&lt;h1&gt;</span> hello {{name}}!<span class="nt">&lt;/h1&gt;</span>
+    %% else:
+    <span class="nt">&lt;h1&gt;</span> Hello World!<span class="nt">&lt;/h1&gt;</span>
+    %% endif
 
-%% # sigleline code
-%% if name:
-&lt;h1&gt; hello {{name}}!&lt;/h1&gt;
-%% else:
-&lt;h1&gt; Hello World!&lt;/h1&gt;
-%% endif
-
-&lt;ul&gt;
-%% for i in range(100):
-    &lt;li&gt;no: {{i}}&lt;/li&gt;
-%% endfor
-&lt;/ul&gt;
-</code></pre>
+    <span class="nt">&lt;ul&gt;</span>
+    %% for i in range(100):
+        <span class="nt">&lt;li&gt;</span>no: {{i}}<span class="nt">&lt;/li&gt;</span>
+    %% endfor
+    <span class="nt">&lt;/ul&gt;</span>
+</pre></div>
 
 <p>To use the <strong>template</strong>, you can use code like below:</p>
 
-<p>.. code-block:: python</p>
+<div class="highlight"><pre>
+    <span class="kn">from</span> <span class="nn">swinf.template</span> <span class="kn">import</span> <span class="n">template</span>
+    <span class="c"># pass tpl source</span>
+    <span class="n">html</span> <span class="o">=</span> <span class="n">template</span><span class="p">(</span><span class="s">"&lt;h1&gt;hello {{name}}"</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">'world'</span><span class="p">)</span>
 
-<pre><code>from swinf.template import template
-# pass tpl source
-html = template("&lt;h1&gt;hello {{name}}", name='world')
-
-# pass a tpl file
-html = template(path='index.tpl', name='world')
-</code></pre>
+    <span class="c"># pass a tpl file</span>
+    <span class="n">html</span> <span class="o">=</span> <span class="n">template</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s">'index.tpl'</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">'world'</span><span class="p">)</span>
+</pre></div>
 
 <h2>Example</h2>
 
@@ -122,52 +125,58 @@ html = template(path='index.tpl', name='world')
 
 <ul>
 <li>A Bottle.py like route binding mechanism</li>
-</ul><p>.. code-block:: python</p>
+</ul><div class="highlight"><pre>
+    <span class="kn">from</span> <span class="nn">swinf.swinf</span> <span class="kn">import</span> <span class="n">run</span>
+    <span class="kn">from</span> <span class="nn">swinf.selector</span> <span class="kn">import</span> <span class="n">route</span>
 
-<pre><code>from swinf.swinf import run
-from swinf.selector import route
+    <span class="c"># a simple controller </span>
+    <span class="nd">@route</span><span class="p">(</span><span class="s">'/hello/:name'</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">'&lt;h1&gt;Hello </span><span class="si">%s</span><span class="s">!&lt;/h1&gt;'</span> <span class="o">%</span> <span class="n">name</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
 
-# a simple controller 
-@route('/hello/:name')
-def hello(name):
-    return '&lt;h1&gt;Hello %s!&lt;/h1&gt;' % name.title()
-
-run(host='localhost', port=8080)
-</code></pre>
+    <span class="n">run</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s">'localhost'</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">8080</span><span class="p">)</span>
+</pre></div>
 
 <ul>
 <li>Much simpler route binding mechanism</li>
-</ul><p>.. code-block:: python</p>
+</ul><div class="highlight"><pre>
+    <span class="c"># module1.py</span>
+    <span class="kn">from</span> <span class="nn">swinf.selector</span> <span class="kn">import</span> <span class="n">handler</span>
 
-<pre><code># module1.py
-from swinf.selector import handler
+    <span class="c"># --------- your code here -----------</span>
 
-# --------- your code here -----------
+    <span class="nd">@handler</span><span class="p">(</span><span class="s">"GET"</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">hello</span><span class="p">():</span>
+        <span class="k">return</span> <span class="s">'&lt;h1&gt;Hello&lt;/h1&gt;'</span> 
 
-@handler("GET")
-def hello():
-    return '&lt;h1&gt;Hello&lt;/h1&gt;' 
-
-@handler("GET")
-def world():
-    return '&lt;h1&gt;World&lt;/h1&gt;' 
-</code></pre>
+    <span class="nd">@handler</span><span class="p">(</span><span class="s">"GET"</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">world</span><span class="p">():</span>
+        <span class="k">return</span> <span class="s">'&lt;h1&gt;World&lt;/h1&gt;'</span> 
+</pre></div>
 
 <p>This will will automatically bind route <strong>/module1/hello</strong> to handler <strong>controller.module1.hello</strong> and <strong>/module1/world</strong> to handler <strong>controller.module1.world</strong>. </p>
 
 <p>You don't have to add routes manully.</p>
-      </section>
+        </article>
+      </div>
     </div>
+    <footer>
+      <div class="owner">
+      <p><a href="https://github.com/swinf" class="avatar"><img src="https://secure.gravatar.com/avatar/eb7203a29eb4e904dc5defe86349ae24?s=30&amp;d=https://a248.e.akamai.net/assets.github.com%2Fimages%2Fgravatars%2Fgravatar-user-420.png" width="48" height="48"/></a> <a href="https://github.com/swinf">swinf</a> maintains <a href="https://github.com/swinf/Swinf">Swinf</a></p>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Swinf maintained by <a href="https://github.com/swinf">swinf</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
 
-    
+      </div>
+      <div class="creds">
+        <small>This page generated using <a href="https://pages.github.com/">GitHub Pages</a><br/>theme by <a href="http://twitter.com/jonrohan/">Jon Rohan</a></small>
+      </div>
+    </footer>
+  </div>
+  <div class="current-section">
+    <a href="#top">Scroll to top</a>
+    <a href="https://github.com/swinf/Swinf/tarball/master" class="tar">tar</a><a href="https://github.com/swinf/Swinf/zipball/master" class="zip">zip</a><a href="" class="code">source code</a>
+    <p class="name"></p>
+  </div>
 
-  </body>
+  
+</body>
 </html>
