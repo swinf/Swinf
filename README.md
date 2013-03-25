@@ -1,22 +1,20 @@
-Swinf Web Frame
-================
+#Swinf Web Frame
 
 Swinf is a simple micro-framework for small web application and has no dependencies other than the Python Standard Liberaty.
 
 It offers a built-in HTTP Server, and a simple route binding mechanism.
 
 
-Commands
----------
-run command : **swinf-admin.py startproject newproject** and swinf will create a project directory.
+##Commands
+run command : `swinf-admin.py startproject newproject` and swinf will create a project directory.
 
-Inside current project directory, there are a **main.py** and three subdirectories:
+Inside current project directory, there are a `main.py` and three subdirectories:
 
-controller::
+controller:
 
     containing controllers.
 
-view::
+view:
     
     containing view template files.
 
@@ -32,20 +30,19 @@ view::
 
         static/files: other static files here
 
-model::
+model:
     
     you can put your database controlling code here.
 
 
 You can add some controllers in `controller` directory and run `main.py`, and it will work.
 
-Template
----------
+##Template
 Currently, swinf have a simple template engine called `SimpleTemplate`.
 
 the tpl syntax follows below
 
-.. code-block:: html
+```html
 
     <!-- in a tpl file -->
 
@@ -69,10 +66,11 @@ the tpl syntax follows below
         <li>no: {{i}}</li>
     %% endfor
     </ul>
+```
 
 To use the **template**, you can use code like below:
 
-.. code-block:: python
+```python
     
     from swinf.template import template
     # pass tpl source
@@ -80,15 +78,14 @@ To use the **template**, you can use code like below:
 
     # pass a tpl file
     html = template(path='index.tpl', name='world')
+```
 
-
-Example
---------
+##Example
 In swinf, there is no `urls.py`-like config file, instead, there are two simple route-config ways:
 
 * A Bottle.py like route binding mechanism
 
-.. code-block:: python
+```python
     
     from swinf.swinf import run
     from swinf.selector import route
@@ -99,10 +96,11 @@ In swinf, there is no `urls.py`-like config file, instead, there are two simple 
         return '<h1>Hello %s!</h1>' % name.title()
 
     run(host='localhost', port=8080)
+```
 
 * Much simpler route binding mechanism
 
-.. code-block:: python
+```python
 
     # module1.py
     from swinf.selector import handler
@@ -116,6 +114,7 @@ In swinf, there is no `urls.py`-like config file, instead, there are two simple 
     @handler("GET")
     def world():
         return '<h1>World</h1>' 
+```
 
 
 This will will automatically bind route **/module1/hello** to handler **controller.module1.hello** and **/module1/world** to handler **controller.module1.world**. 
