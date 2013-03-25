@@ -1,5 +1,5 @@
 from swinf import config
-
+import view  # import default view extensions
 
 config.debug = True
 config.optimize = False

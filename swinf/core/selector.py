@@ -14,10 +14,12 @@ ROUTES_REGEXP = {}
 
 
 def compile_route(route):
-    """ Compiles a route string and returns a precompiled RegexObject.
+    """ Compiles a route string and returns a precompiled 
+        RegexObject.
 
     Routes may contain some special syntax.
-    Example: '/user/:id/:action' will match '/user/5/kiss' with {'id':'5', 'action':'kiss'} """
+    Example: '/user/:id/:action' will match '/user/5/kiss' 
+        with {'id':'5', 'action':'kiss'} """
     route = route.strip().lstrip('$^/').rstrip('$^')
     # Something like: '/user/:id#[0-9]#' will match
     # '/user/5' with {id:5}
@@ -28,7 +30,8 @@ def compile_route(route):
 
 
 def match_url(url, method = 'GET'):
-    """ Returns the first matching handler and a parameter dict or (None, None)"""
+    """ Returns the first matching handler and a parameter 
+        dict or (None, None)"""
     url = '/' + url.strip().lstrip('/')
     # Static routes first
     route = ROUTES_SIMPLE.get(method, {}).get(url, None)
@@ -56,7 +59,8 @@ def add_route(route, handler, method='GET', simple=False):
         ROUTES_SIMPLE.setdefault(method, {})[route] = handler
     else:
         route = compile_route(route)
-        ROUTES_REGEXP.setdefault(method, []).append([route, handler])
+        ROUTES_REGEXP.setdefault(method, []).append([route, \
+            handler])
 
 
 def route(url, **kargs):
@@ -71,7 +75,8 @@ __handlespace__ = None
 
 
 def handler_walk(control_dir = "controller/", skip_prefix=True):
-    """ Tranverse the 'controller/' dir and merge handlers from each module.  
+    """ Tranverse the 'controller/' dir and merge handlers 
+        from each module.  
         
         Example:
             
@@ -92,20 +97,25 @@ def handler_walk(control_dir = "controller/", skip_prefix=True):
     handle_modules = []
 
     def add_handle_modules(control_dir):
-        """ Scan modules and get module paths containing valid handlers.  """
+        """ Scan modules and get module paths containing 
+        valid handlers.  """
         objects = os.walk(control_dir)
         # current dir
         for obj in objects:
             # TODO inter add abs path
             if obj[2] and "__init__.py" in obj[2]:
-                module_files = [ f[:-3] for f in obj[2] if f.endswith(".py") ]
-                module_paths = [os.path.join(obj[0], f) for f in module_files ]
-                module_strs = [f.replace('/', '.') for f in module_paths]
+                module_files = [ f[:-3] for f in obj[2] if \
+                    f.endswith(".py") ]
+                module_paths = [os.path.join(obj[0], f) \
+                        for f in module_files ]
+                module_strs = [f.replace('/', '.') \
+                        for f in module_paths]
                 handle_modules.extend(module_strs)
                 # Nested walking 
                 if obj[1]:
                     for dirpath in obj[1]:
-                        add_handle_modules( os.path.join(control_dir, dirpath))
+                        add_handle_modules( os.path.join\
+                                (control_dir, dirpath))
 
     add_handle_modules(control_dir)
     join_handler_space(*handle_modules)
@@ -116,18 +126,21 @@ def handler_walk(control_dir = "controller/", skip_prefix=True):
         print "skip prefix"
         for method in ROUTES_SIMPLE:
             for route in ROUTES_SIMPLE[method]:
-                print "prefix: %s, route: %s : " % (prefix, route)
+                print "prefix: %s, route: %s : " % \
+                        (prefix, route)
                 if route.startswith(prefix):
                     handler = ROUTES_SIMPLE[method][route]
                     del ROUTES_SIMPLE[method][route]
                     route = route.replace(prefix, "/")
-                    ROUTES_SIMPLE[method].setdefault(route, handler)
+                    ROUTES_SIMPLE[method].setdefault\
+                            (route, handler)
 
         
     
 
 def join_handler_space(*module_paths):
-    """ Given handler's module and automatically add handlers to routes
+    """ Given handler's module and automatically 
+        add handlers to routes
     
     Example:
 
@@ -136,7 +149,8 @@ def join_handler_space(*module_paths):
             "package2.module2",
         )
 
-    and it will add all handlers of package1.module1 and package2.module2
+    and it will add all handlers of package1.module1 \
+            and package2.module2
     to routes
     """
     for path in module_paths:
