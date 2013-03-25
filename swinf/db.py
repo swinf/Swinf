@@ -21,10 +21,17 @@ class SqlaOrm(HandlerHookAdapter):
             hookto.add_processor('sqlalchemy_orm', self)
 
     def hook_start(self):
-        swinf.ctx.orm = scoped_session(sessionmaker(bind=self.engine))
+        swinf.ctx.orm = scoped_session(sessionmaker(\
+                bind=self.engine))
 
     def hook_end(self):
         swinf.ctx.orm.commit()
 
 def create_sqla(engine):
+    """
+    Create a Sqlalchemy session and hook it to handler_hooks
+
+    args:
+        engine : Sqlalchemy engine
+    """
     return SqlaOrm(engine, hookto=handler_hooks)
