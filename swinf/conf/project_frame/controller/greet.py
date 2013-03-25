@@ -1,4 +1,4 @@
-from swinf.selector import handler
+from swinf import handler
 
 @handler("GET")
 def hello():

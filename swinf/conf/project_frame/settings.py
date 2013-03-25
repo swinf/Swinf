@@ -1,5 +1,8 @@
 from swinf import config
-import view  # import default view extensions
+# import default view extensions
+import view  
+# use default handlers
+import swinf.utils.default_handlers 
 
 config.debug = True
 config.optimize = False
