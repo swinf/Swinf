@@ -1,4 +1,4 @@
-__author__ = 'Chunwei Yan <superjom@gmail.com>'
+__author__ = 'Chunwei Yan <yanchunwei@outlook.com>'
 __version__ = ('0', '0', '5')
 __license__ = 'MIT'
 
